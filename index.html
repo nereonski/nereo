@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nereo – Developer Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Matrix background animation -->
+  <canvas id="matrix-canvas"></canvas>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <span class="logo-text">&lt;nereo/&gt;</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="#about" class="nav-link">About</a>
+        </li>
+        <li class="nav-item">
+          <a href="#projects" class="nav-link">Projects</a>
+        </li>
+        <li class="nav-item">
+          <a href="#contact" class="nav-link">Contact</a>
+        </li>
+      </ul>
+      <div class="hamburger">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="greeting">Hello, I'm</span>
+        <span class="name">Nereo</span>
+        <span class="title-highlight">Developer & Tech Enthusiast</span>
+      </h1>
+      <p class="hero-description">
+        Freight forwarding specialist by day, passionate developer by night. 
+        Building digital solutions and exploring the endless possibilities of technology.
+      </p>
+      <div class="hero-buttons">
+        <a href="#projects" class="btn btn-primary">View My Work</a>
+        <a href="#contact" class="btn btn-secondary">Get In Touch</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main>
+    <!-- About Section -->
+    <section id="about" class="section">
+      <div class="container">
+        <h2 class="section-title">About Me</h2>
+        <div class="about-content">
+          <div class="about-text">
+            <p class="about-description">
+              I'm a dedicated professional in freight forwarding with a growing passion for technology and development. 
+              This portfolio represents my journey into the world of coding, where I experiment, learn, and build 
+              innovative solutions.
+            </p>
+            <p class="about-description">
+              When I'm not managing logistics, you'll find me exploring new technologies, working on personal projects, 
+              and continuously expanding my skills in web development and software engineering.
+            </p>
+            <div class="skills">
+              <h3>Skills & Interests</h3>
+              <div class="skill-tags">
+                <span class="skill-tag">Web Development</span>
+                <span class="skill-tag">JavaScript</span>
+                <span class="skill-tag">HTML/CSS</span>
+                <span class="skill-tag">Problem Solving</span>
+                <span class="skill-tag">Logistics</span>
+                <span class="skill-tag">Project Management</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="section">
+      <div class="container">
+        <h2 class="section-title">Featured Projects</h2>
+        <div class="projects-grid">
+          <div class="project-card">
+            <div class="project-header">
+              <h3 class="project-title">PETCARGO</h3>
+              <span class="project-status">In Progress</span>
+            </div>
+            <p class="project-description">
+              Global pet transport solutions platform. A comprehensive website for managing 
+              international pet transportation services.
+            </p>
+            <div class="project-tech">
+              <span class="tech-tag">Web Development</span>
+              <span class="tech-tag">Business Solutions</span>
+            </div>
+            <div class="project-links">
+              <a href="#" class="project-link">View Project</a>
+            </div>
+          </div>
+
+          <div class="project-card">
+            <div class="project-header">
+              <h3 class="project-title">Small Business Website</h3>
+              <span class="project-status">Completed</span>
+            </div>
+            <p class="project-description">
+              Custom website development for a local business, focusing on user experience 
+              and modern design principles.
+            </p>
+            <div class="project-tech">
+              <span class="tech-tag">HTML/CSS</span>
+              <span class="tech-tag">JavaScript</span>
+              <span class="tech-tag">Responsive Design</span>
+            </div>
+            <div class="project-links">
+              <a href="#" class="project-link">View Project</a>
+            </div>
+          </div>
+
+          <div class="project-card">
+            <div class="project-header">
+              <h3 class="project-title">Portfolio Website</h3>
+              <span class="project-status">Current</span>
+            </div>
+            <p class="project-description">
+              This very website! A modern, responsive portfolio built with vanilla HTML, CSS, 
+              and JavaScript, featuring smooth animations and a developer-focused design.
+            </p>
+            <div class="project-tech">
+              <span class="tech-tag">HTML5</span>
+              <span class="tech-tag">CSS3</span>
+              <span class="tech-tag">JavaScript</span>
+              <span class="tech-tag">Animations</span>
+            </div>
+            <div class="project-links">
+              <a href="#" class="project-link">View Source</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section">
+      <div class="container">
+        <h2 class="section-title">Let's Connect</h2>
+        <div class="contact-content">
+          <div class="contact-info">
+            <p class="contact-description">
+              I'm always interested in new opportunities, collaborations, and interesting projects. 
+              Whether you have a question, want to work together, or just want to say hi, 
+              I'd love to hear from you!
+            </p>
+            <div class="contact-methods">
+              <a href="mailto:your.email@example.com" class="contact-method">
+                <span class="contact-icon">📧</span>
+                <span>your.email@example.com</span>
+              </a>
+              <a href="https://linkedin.com/in/yourprofile" class="contact-method">
+                <span class="contact-icon">💼</span>
+                <span>LinkedIn Profile</span>
+              </a>
+              <a href="https://github.com/yourusername" class="contact-method">
+                <span class="contact-icon">🐙</span>
+                <span>GitHub Profile</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 Nereo. Built with passion and lots of coffee ☕</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
