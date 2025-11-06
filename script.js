@@ -8,6 +8,7 @@ class MatrixRain {
     this.fontSize = 14;
     this.columns = 0;
     this.animationId = null;
+    this.currentTheme = 'dark';
     
     this.init();
   }
@@ -38,13 +39,22 @@ class MatrixRain {
   }
 
   draw() {
-    // Semi-transparent black background for trail effect
-    this.ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+    // Semi-transparent background for trail effect (theme-dependent)
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    this.currentTheme = theme;
+    
+    if (theme === 'light') {
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    } else {
+      this.ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+    }
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Set font and color
+    // Set font and color (theme-dependent)
     this.ctx.font = `${this.fontSize}px 'JetBrains Mono', monospace`;
-    this.ctx.fillStyle = '#00ff64';
+    
+    // Use darker green for light mode
+    const baseColor = theme === 'light' ? 'rgba(0, 170, 85' : 'rgba(0, 255, 100';
 
     // Draw characters
     for (let i = 0; i < this.drops.length; i++) {
@@ -54,7 +64,7 @@ class MatrixRain {
 
       // Add some opacity variation
       const opacity = Math.random() * 0.8 + 0.2;
-      this.ctx.fillStyle = `rgba(0, 255, 100, ${opacity})`;
+      this.ctx.fillStyle = `${baseColor}, ${opacity})`;
       
       this.ctx.fillText(char, x, y);
 
@@ -183,44 +193,6 @@ class SmoothScrolling {
   }
 }
 
-// ===== TYPING ANIMATION =====
-class TypingAnimation {
-  constructor(element, text, speed = 100) {
-    this.element = element;
-    this.text = text;
-    this.speed = speed;
-    this.currentIndex = 0;
-    this.isDeleting = false;
-    
-    this.init();
-  }
-
-  init() {
-    this.type();
-  }
-
-  type() {
-    const currentText = this.text.substring(0, this.currentIndex);
-    this.element.textContent = currentText;
-
-    if (!this.isDeleting && this.currentIndex < this.text.length) {
-      this.currentIndex++;
-      setTimeout(() => this.type(), this.speed);
-    } else if (this.isDeleting && this.currentIndex > 0) {
-      this.currentIndex--;
-      setTimeout(() => this.type(), this.speed / 2);
-    } else if (this.currentIndex === this.text.length) {
-      setTimeout(() => {
-        this.isDeleting = true;
-        this.type();
-      }, 2000);
-    } else if (this.isDeleting && this.currentIndex === 0) {
-      this.isDeleting = false;
-      setTimeout(() => this.type(), 500);
-    }
-  }
-}
-
 // ===== PARTICLE EFFECTS =====
 class ParticleEffects {
   constructor() {
@@ -274,6 +246,9 @@ class ParticleEffects {
   animate() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const baseColor = theme === 'light' ? '0, 170, 85' : '0, 255, 100';
+
     this.particles.forEach(particle => {
       // Update position
       particle.x += particle.vx;
@@ -296,10 +271,10 @@ class ParticleEffects {
       if (particle.y < 0) particle.y = this.canvas.height;
       if (particle.y > this.canvas.height) particle.y = 0;
 
-      // Draw particle
+      // Draw particle (theme-dependent)
       this.ctx.beginPath();
       this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      this.ctx.fillStyle = `rgba(0, 255, 100, ${particle.opacity})`;
+      this.ctx.fillStyle = `rgba(${baseColor}, ${particle.opacity})`;
       this.ctx.fill();
     });
 
@@ -321,12 +296,21 @@ class NavbarScrollEffect {
 
   handleScroll() {
     const currentScrollY = window.scrollY;
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     
     if (currentScrollY > 100) {
-      this.navbar.style.background = 'rgba(10, 10, 10, 0.98)';
+      if (theme === 'light') {
+        this.navbar.style.background = 'rgba(255, 255, 255, 0.98)';
+      } else {
+        this.navbar.style.background = 'rgba(10, 10, 10, 0.98)';
+      }
       this.navbar.style.backdropFilter = 'blur(15px)';
     } else {
-      this.navbar.style.background = 'rgba(10, 10, 10, 0.95)';
+      if (theme === 'light') {
+        this.navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+      } else {
+        this.navbar.style.background = 'rgba(10, 10, 10, 0.95)';
+      }
       this.navbar.style.backdropFilter = 'blur(10px)';
     }
 
@@ -341,8 +325,56 @@ class NavbarScrollEffect {
   }
 }
 
+// ===== THEME MANAGEMENT =====
+class ThemeManager {
+  constructor() {
+    this.themeToggle = document.getElementById('theme-toggle');
+    this.moonIcon = document.querySelector('.moon-icon');
+    this.sunIcon = document.querySelector('.sun-icon');
+    this.currentTheme = localStorage.getItem('theme') || 'dark';
+    
+    this.init();
+  }
+
+  init() {
+    // Set initial theme
+    this.setTheme(this.currentTheme);
+    
+    // Add event listener
+    this.themeToggle.addEventListener('click', () => this.toggleTheme());
+  }
+
+  setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    
+    // Update icons
+    if (theme === 'light') {
+      this.moonIcon.style.display = 'none';
+      this.sunIcon.style.display = 'block';
+    } else {
+      this.moonIcon.style.display = 'block';
+      this.sunIcon.style.display = 'none';
+    }
+    
+    this.currentTheme = theme;
+  }
+
+  toggleTheme() {
+    const newTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+    this.setTheme(newTheme);
+  }
+
+  getTheme() {
+    return this.currentTheme;
+  }
+}
+
 // ===== INITIALIZE EVERYTHING =====
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize theme manager first
+  const themeManager = new ThemeManager();
+  
   // Initialize all components
   const matrixRain = new MatrixRain();
   const scrollAnimations = new ScrollAnimations();
@@ -350,16 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const smoothScrolling = new SmoothScrolling();
   const particleEffects = new ParticleEffects();
   const navbarEffect = new NavbarScrollEffect();
-
-  // Add typing animation to hero title (optional)
-  const heroTitle = document.querySelector('.name');
-  if (heroTitle) {
-    const originalText = heroTitle.textContent;
-    heroTitle.textContent = '';
-    setTimeout(() => {
-      new TypingAnimation(heroTitle, originalText, 150);
-    }, 1000);
-  }
 
   // Add some interactive hover effects
   const projectCards = document.querySelectorAll('.project-card');
