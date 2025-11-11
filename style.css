@@ -159,7 +159,7 @@ p {
   color: var(--accent-primary);
   text-decoration: none;
   transition: all 0.3s ease;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.05em;
 }
 
 .nav-logo .logo-text:hover {
@@ -681,6 +681,34 @@ p {
   padding: 2rem 0;
   text-align: center;
   color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.footer-signature {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.skull-icon {
+  width: 60px;
+  height: 60px;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 4px var(--accent-primary));
+  cursor: pointer;
+}
+
+.skull-icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 8px var(--accent-primary));
+}
+
+.skull-link {
+  display: inline-block;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 
