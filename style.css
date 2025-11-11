@@ -824,6 +824,28 @@ p {
     transform: translateY(-7px) rotate(-45deg);
   }
 
+  .hero {
+    padding-top: 100px;
+    padding-bottom: 2rem;
+    min-height: calc(100vh - 70px);
+    align-items: flex-start;
+  }
+
+  .hero-title {
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .greeting {
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-title .name {
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
   .hero-buttons {
     flex-direction: column;
     align-items: center;
@@ -868,7 +890,7 @@ p {
   }
 
   .hero {
-    padding: 0 1rem;
+    padding: 100px 1rem 2rem 1rem;
   }
 
   .project-card {
