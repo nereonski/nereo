@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog Post — Nereo</title>
+  <link rel="icon" type="image/png" href="assets/images/Skulli.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="blog.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="blog-page">
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-left">
+        <div class="nav-logo">
+          <a href="index.html" class="logo-text">&lt;nereo/&gt;</a>
+        </div>
+      </div>
+      <div class="nav-center">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" style="display: none;">
+          <!-- Theme toggle hidden on blog pages -->
+        </button>
+      </div>
+      <div class="nav-right">
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="index.html#about" class="nav-link">About</a>
+          </li>
+          <li class="nav-item">
+            <a href="index.html#projects" class="nav-link">Progress</a>
+          </li>
+          <li class="nav-item">
+            <a href="blog.html" class="nav-link">Blog</a>
+          </li>
+          <li class="nav-item">
+            <a href="index.html#contact" class="nav-link">Contact</a>
+          </li>
+        </ul>
+        <div class="hamburger">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Blog Container -->
+  <div class="blog-container">
+    <article class="blog-post">
+      <a href="blog.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Blog
+      </a>
+
+      <header id="blog-post-header" class="blog-post-header">
+        <!-- Content loaded dynamically -->
+      </header>
+
+      <div id="blog-post-content" class="blog-post-content">
+        <!-- Content loaded dynamically -->
+      </div>
+    </article>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="blog.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
