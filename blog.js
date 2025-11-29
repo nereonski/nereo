@@ -99,7 +99,11 @@ async function getBlogPosts() {
           // Extract title from first line of content if filename doesn't have em dash
           let title = parsed.title;
           const firstLine = content.split('\n')[0];
-          const titleMatch = firstLine.match(/^\d{4}-\d{2}-\d{2}\s*—\s*(.+)$/);
+          // Try em dash first (for backward compatibility), then hyphen
+          let titleMatch = firstLine.match(/^\d{4}-\d{2}-\d{2}\s*—\s*(.+)$/);
+          if (!titleMatch) {
+            titleMatch = firstLine.match(/^\d{4}-\d{2}-\d{2}\s*-\s*(.+)$/);
+          }
           if (titleMatch) {
             title = titleMatch[1];
           }
