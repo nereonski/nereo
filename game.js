@@ -1059,8 +1059,10 @@ class SpaceGame {
     // Only show mobile controls on touch devices and when playing
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     if (this.mobileControls) {
-      this.mobileControls.style.display = isTouchDevice ? 'flex' : 'none';
-      // Initially hidden until game starts
+      // Always start hidden - visibility will be controlled by updateMobileControlsVisibility()
+      this.mobileControls.style.display = 'none';
+      this.mobileControls.style.visibility = 'hidden';
+      // Set up initial visibility based on state
       if (isTouchDevice) {
         this.updateMobileControlsVisibility();
       }
@@ -1266,6 +1268,9 @@ class SpaceGame {
       
       // Return to menu
       this.state = 'menu';
+      
+      // Hide mobile controls when returning to menu
+      this.updateMobileControlsVisibility();
       
       // Exit fullscreen if active
       const isFullscreen = !!(
@@ -1529,11 +1534,14 @@ class SpaceGame {
     if (!this.playerNickname) {
       this.state = 'nickname';
       this.nicknameInput = '';
+      this.updateMobileControlsVisibility();
       return;
     }
     
     this.state = 'playing';
     this.waveManager.startStage();
+    // Update mobile controls visibility when game starts
+    this.updateMobileControlsVisibility();
     // Focus the canvas to ensure keyboard events are captured
     this.canvas.focus();
     this.gameLoop();
@@ -1556,11 +1564,14 @@ class SpaceGame {
     if (!this.playerNickname) {
       this.state = 'nickname';
       this.nicknameInput = '';
+      this.updateMobileControlsVisibility();
       return;
     }
     
     this.state = 'playing';
     this.waveManager.startStage();
+    // Update mobile controls visibility when game restarts
+    this.updateMobileControlsVisibility();
     // Focus canvas to ensure keyboard events work
     this.canvas.focus();
   }
@@ -1890,7 +1901,20 @@ class SpaceGame {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     if (isTouchDevice) {
       // Show controls only when playing or paused
-      this.mobileControls.style.display = (this.state === 'playing' || this.state === 'paused') ? 'flex' : 'none';
+      const shouldShow = (this.state === 'playing' || this.state === 'paused');
+      if (shouldShow) {
+        this.mobileControls.style.display = 'flex';
+        this.mobileControls.style.visibility = 'visible';
+        this.mobileControls.style.opacity = '1';
+        // Force reflow to ensure display change takes effect
+        this.mobileControls.offsetHeight;
+      } else {
+        this.mobileControls.style.display = 'none';
+        this.mobileControls.style.visibility = 'hidden';
+        this.mobileControls.style.opacity = '0';
+      }
+    } else {
+      this.mobileControls.style.display = 'none';
     }
   }
 

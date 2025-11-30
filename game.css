@@ -374,7 +374,8 @@
   align-items: flex-end;
   padding: 0 20px;
   pointer-events: none;
-  z-index: 10;
+  z-index: 1000;
+  /* Ensure controls are always on top */
 }
 
 .mobile-controls > * {
@@ -460,9 +461,8 @@
     position: relative;
   }
 
-  .mobile-controls {
-    display: flex;
-  }
+  /* Let JavaScript control visibility - don't force display here */
+  /* .mobile-controls visibility is controlled by JavaScript */
 
   #space-game-canvas {
     touch-action: none;
