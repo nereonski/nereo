@@ -1,7 +1,7 @@
 /* ===== SPACE GAME STYLING ===== */
 
 #space-game {
-  padding: 5rem 0;
+  padding: 8rem 0 5rem 0;
   position: relative;
   background: linear-gradient(135deg, rgba(0, 255, 100, 0.02) 0%, rgba(0, 0, 0, 0.8) 100%);
   transition: background 0.3s ease;
@@ -120,6 +120,139 @@
   text-align: center;
 }
 
+.fullscreen-btn {
+  background: var(--shadow-color);
+  color: var(--accent-primary);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 30px;
+  height: 28px;
+}
+
+.fullscreen-btn:hover {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05);
+}
+
+.fullscreen-btn:active {
+  transform: scale(0.95);
+}
+
+.fullscreen-icon,
+.fullscreen-exit-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+.exit-btn {
+  background: var(--shadow-color);
+  color: var(--accent-primary);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 30px;
+  height: 28px;
+}
+
+.exit-btn:hover {
+  background: #ff4444;
+  color: var(--bg-primary);
+  border-color: #ff4444;
+  transform: scale(1.05);
+}
+
+.exit-btn:active {
+  transform: scale(0.95);
+}
+
+.exit-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+.game-canvas-container:fullscreen {
+  background: #0a0a0a;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-canvas-container:-webkit-full-screen {
+  background: #0a0a0a;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-canvas-container:-moz-full-screen {
+  background: #0a0a0a;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-canvas-container:-ms-fullscreen {
+  background: #0a0a0a;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-canvas-container:fullscreen #space-game-canvas,
+.game-canvas-container:-webkit-full-screen #space-game-canvas,
+.game-canvas-container:-moz-full-screen #space-game-canvas,
+.game-canvas-container:-ms-fullscreen #space-game-canvas {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
+
+[data-theme="light"] .game-canvas-container:fullscreen,
+[data-theme="light"] .game-canvas-container:-webkit-full-screen,
+[data-theme="light"] .game-canvas-container:-moz-full-screen,
+[data-theme="light"] .game-canvas-container:-ms-fullscreen {
+  background: #f5f5f5;
+}
+
 .game-status {
   margin-top: 1rem;
   font-size: 0.9rem;
@@ -127,10 +260,46 @@
   font-style: italic;
 }
 
+.leaderboard-container {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px var(--shadow-color);
+  transition: all 0.3s ease;
+}
+
+.leaderboard-container:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 15px 40px var(--shadow-color);
+}
+
+.leaderboard-title {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: var(--text-heading);
+  font-size: 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+#leaderboard-canvas {
+  display: block;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 8px;
+  background: rgba(10, 10, 10, 0.5);
+}
+
+[data-theme="light"] #leaderboard-canvas {
+  background: rgba(255, 255, 255, 0.7);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   #space-game {
-    padding: 3rem 0;
+    padding: 6rem 0 3rem 0;
   }
 
   .game-container {

@@ -9,7 +9,7 @@ class Player {
     this.x = canvas.width / 2 - this.width / 2;
     this.y = canvas.height - this.height - 30;
     this.speed = 2;
-    this.lives = 6;
+    this.lives = 3;
     this.shootCooldown = 0;
     this.shootDelay = 15;
     this.powerUps = {
@@ -283,7 +283,7 @@ class Player {
   reset() {
     this.x = this.canvas.width / 2 - this.width / 2;
     this.y = this.canvas.height - this.height - 30;
-    this.lives = 6;
+    this.lives = 3;
     this.powerUps = {
       rapidFire: false,
       doubleShot: false,
@@ -638,7 +638,7 @@ class PowerUp {
 class WaveManager {
   constructor() {
     this.currentStage = 0;
-    this.maxStages = 50;
+    this.maxStages = Infinity; // Unlimited stages
     this.enemiesPerStage = 3;
     this.enemiesSpawned = 0;
     this.spawnTimer = 0;
@@ -757,7 +757,7 @@ class WaveManager {
   }
 
   isGameComplete() {
-    return this.currentStage >= this.maxStages;
+    return false; // Game never completes - unlimited stages
   }
 }
 
@@ -997,7 +997,7 @@ class SpaceGame {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.state = 'menu'; // menu, playing, paused, gameover, victory
+    this.state = 'menu'; // menu, nickname, playing, paused, gameover, victory
     
     this.player = new Player(canvas);
     this.enemies = [];
@@ -1012,28 +1012,270 @@ class SpaceGame {
     this.keys = {};
     this.lastShot = false;
     this.oneUpTimer = 0;
-    this.oneUpSpawnInterval = 3600; // Spawn one-up every ~60 seconds at 60fps
+    this.oneUpSpawnInterval = 10800; // Spawn one-up every ~180 seconds (3 minutes) at 60fps
+    this.playerNickname = '';
+    this.nicknameInput = '';
+    this.showNicknamePrompt = false;
+    this.cursorBlinkTimer = 0;
+    
+    // Leaderboard canvas
+    this.leaderboardCanvas = document.getElementById('leaderboard-canvas');
+    this.leaderboardCtx = this.leaderboardCanvas ? this.leaderboardCanvas.getContext('2d') : null;
     
     this.setupEventListeners();
+    this.setupFullscreen();
+    this.setupExitButton();
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
+    this.loadLeaderboard();
+    this.drawLeaderboard();
+  }
+
+  setupExitButton() {
+    const exitBtn = document.getElementById('exit-btn');
+    if (!exitBtn) return;
+
+    exitBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.exitGame();
+    });
+  }
+
+  exitGame() {
+    // Stop the game and return to menu
+    if (this.state === 'playing' || this.state === 'paused') {
+      // Reset game state
+      this.player.reset();
+      this.enemies = [];
+      this.bullets = [];
+      this.enemyBullets = [];
+      this.powerUps = [];
+      this.particles = [];
+      this.waveManager = new WaveManager();
+      this.score = 0;
+      this.oneUpTimer = 0;
+      this.lastShot = false;
+      this.keys = {};
+      
+      // Return to menu
+      this.state = 'menu';
+      
+      // Exit fullscreen if active
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      
+      if (isFullscreen) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+    }
+  }
+
+  setupFullscreen() {
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const fullscreenIcon = fullscreenBtn?.querySelector('.fullscreen-icon');
+    const fullscreenExitIcon = fullscreenBtn?.querySelector('.fullscreen-exit-icon');
+    
+    if (!fullscreenBtn) return;
+
+    // Check if currently in fullscreen mode
+    const isFullscreenActive = () => {
+      const container = this.canvas.parentElement;
+      return !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement ||
+        (container && (
+          container === document.fullscreenElement ||
+          container === document.webkitFullscreenElement ||
+          container === document.mozFullScreenElement ||
+          container === document.msFullscreenElement
+        ))
+      );
+    };
+
+    const enterFullscreen = async () => {
+      const container = this.canvas.parentElement;
+      
+      if (!container) {
+        console.error('Canvas container not found');
+        return;
+      }
+      
+      try {
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+          await container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+          await container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+          await container.msRequestFullscreen();
+        } else {
+          console.warn('Fullscreen API not supported in this browser');
+          alert('Fullscreen is not supported in your browser. Please try a modern browser like Chrome, Firefox, or Edge.');
+        }
+      } catch (error) {
+        console.error('Error entering fullscreen:', error);
+        // Some browsers require fullscreen to be triggered by user interaction
+        // If it fails, try requesting fullscreen on the canvas directly
+        try {
+          if (this.canvas.requestFullscreen) {
+            await this.canvas.requestFullscreen();
+          } else if (this.canvas.webkitRequestFullscreen) {
+            await this.canvas.webkitRequestFullscreen();
+          } else if (this.canvas.mozRequestFullScreen) {
+            await this.canvas.mozRequestFullScreen();
+          } else if (this.canvas.msRequestFullscreen) {
+            await this.canvas.msRequestFullscreen();
+          }
+        } catch (err) {
+          console.error('Error entering fullscreen on canvas:', err);
+        }
+      }
+    };
+
+    const exitFullscreen = async () => {
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+      } catch (error) {
+        console.error('Error exiting fullscreen:', error);
+      }
+    };
+
+    const toggleFullscreen = async () => {
+      if (isFullscreenActive()) {
+        await exitFullscreen();
+      } else {
+        await enterFullscreen();
+      }
+    };
+
+    // Update button icon based on fullscreen state
+    const updateFullscreenIcon = () => {
+      const isFullscreen = isFullscreenActive();
+      if (isFullscreen) {
+        if (fullscreenIcon) fullscreenIcon.style.display = 'none';
+        if (fullscreenExitIcon) fullscreenExitIcon.style.display = 'block';
+      } else {
+        if (fullscreenIcon) fullscreenIcon.style.display = 'block';
+        if (fullscreenExitIcon) fullscreenExitIcon.style.display = 'none';
+      }
+      // Resize canvas when fullscreen changes
+      setTimeout(() => this.resizeCanvas(), 100);
+    };
+
+    // Initial icon state
+    updateFullscreenIcon();
+
+    // Button click handler
+    fullscreenBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      toggleFullscreen().catch(err => {
+        console.error('Fullscreen toggle failed:', err);
+      });
+    });
+
+    // Listen for fullscreen changes
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+
+    // Keyboard shortcut (F key for fullscreen)
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'f' || e.key === 'F') && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
   }
 
   resizeCanvas() {
     const container = this.canvas.parentElement;
-    const maxWidth = Math.min(800, window.innerWidth - 40);
-    this.canvas.width = maxWidth;
-    this.canvas.height = 600;
+    const isFullscreen = !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement ||
+      (container && (
+        container === document.fullscreenElement ||
+        container === document.webkitFullscreenElement ||
+        container === document.mozFullScreenElement ||
+        container === document.msFullscreenElement
+      ))
+    );
+
+    if (isFullscreen) {
+      // In fullscreen, use the full viewport
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+    } else {
+      // Normal mode: maintain aspect ratio with max width
+      const maxWidth = Math.min(800, window.innerWidth - 40);
+      this.canvas.width = maxWidth;
+      this.canvas.height = 600;
+    }
     
     if (this.player) {
       this.player.canvas = this.canvas;
-      this.player.x = Math.min(this.player.x, this.canvas.width - this.player.width);
-      this.player.y = Math.min(this.player.y, this.canvas.height - this.player.height);
+      // Ensure player stays within bounds
+      this.player.x = Math.max(0, Math.min(this.player.x, this.canvas.width - this.player.width));
+      this.player.y = Math.max(0, Math.min(this.player.y, this.canvas.height - this.player.height));
+    }
+    
+    // Resize leaderboard canvas
+    if (this.leaderboardCanvas) {
+      const maxWidth = Math.min(800, window.innerWidth - 40);
+      this.leaderboardCanvas.width = maxWidth;
+      this.leaderboardCanvas.height = 300;
+      this.drawLeaderboard();
     }
   }
 
   setupEventListeners() {
     document.addEventListener('keydown', (e) => {
+      // Handle nickname input
+      if (this.state === 'nickname') {
+        if (e.key === 'Enter' && this.nicknameInput.trim().length > 0) {
+          this.playerNickname = this.nicknameInput.trim().substring(0, 15); // Limit to 15 chars
+          this.nicknameInput = '';
+          this.state = 'menu';
+          return;
+        } else if (e.key === 'Backspace') {
+          this.nicknameInput = this.nicknameInput.slice(0, -1);
+          return;
+        } else if (e.key.length === 1 && /[a-zA-Z0-9_\- ]/.test(e.key)) {
+          if (this.nicknameInput.length < 15) {
+            this.nicknameInput += e.key;
+          }
+          return;
+        }
+      }
+      
       // Prevent default behavior for game controls to avoid page scrolling
       // Only prevent when game is active (playing, paused, or menu states)
       const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
@@ -1057,7 +1299,9 @@ class SpaceGame {
       }
       
       if (e.key === 'r' || e.key === 'R') {
-        if (this.state === 'gameover' || this.state === 'victory') {
+        // Allow restart from any state except menu (menu uses spacebar to start)
+        if (this.state !== 'menu' && this.state !== 'nickname') {
+          e.preventDefault();
           this.restart();
         }
       }
@@ -1075,6 +1319,13 @@ class SpaceGame {
   }
 
   start() {
+    // Check if nickname is set, if not prompt for it
+    if (!this.playerNickname) {
+      this.state = 'nickname';
+      this.nicknameInput = '';
+      return;
+    }
+    
     this.state = 'playing';
     this.waveManager.startStage();
     // Focus the canvas to ensure keyboard events are captured
@@ -1092,8 +1343,20 @@ class SpaceGame {
     this.waveManager = new WaveManager();
     this.score = 0;
     this.oneUpTimer = 0;
+    this.lastShot = false;
+    this.keys = {}; // Reset all keys
+    
+    // Check if nickname is set, if not prompt for it
+    if (!this.playerNickname) {
+      this.state = 'nickname';
+      this.nicknameInput = '';
+      return;
+    }
+    
     this.state = 'playing';
     this.waveManager.startStage();
+    // Focus canvas to ensure keyboard events work
+    this.canvas.focus();
   }
 
   update() {
@@ -1113,19 +1376,8 @@ class SpaceGame {
     if (this.waveManager.isStageComplete(this.enemies) && !this.waveManager.stageCompleted) {
       this.waveManager.stageCompleted = true; // Mark this stage as processed
       
-      // Only check for victory if we've actually completed at least one stage with enemies
-      // and we've completed all stages (currentStage represents the stage we just completed)
-      // After completing stage 50, currentStage will be 50, which equals maxStages
-      if (this.waveManager.currentStage > 0 && 
-          this.waveManager.currentStage === this.waveManager.maxStages &&
-          this.waveManager.enemiesSpawned > 0) {
-        this.state = 'victory';
-        if (this.score > this.highScore) {
-          this.highScore = this.score;
-          localStorage.setItem('spaceGameHighScore', this.highScore.toString());
-        }
-      } else if (this.waveManager.currentStage > 0) {
-        // We haven't completed all stages yet, so continue to next stage
+      // Continue to next stage (unlimited stages)
+      if (this.waveManager.currentStage > 0) {
         this.score += 100 * this.waveManager.currentStage;
         setTimeout(() => {
           // Start next stage (startStage will increment currentStage)
@@ -1216,10 +1468,7 @@ class SpaceGame {
         const isDead = this.player.takeDamage();
         if (isDead) {
           this.state = 'gameover';
-          if (this.score > this.highScore) {
-            this.highScore = this.score;
-            localStorage.setItem('spaceGameHighScore', this.highScore.toString());
-          }
+          this.saveScore();
         }
       }
     });
@@ -1256,10 +1505,7 @@ class SpaceGame {
         const isDead = this.player.takeDamage();
         if (isDead) {
           this.state = 'gameover';
-          if (this.score > this.highScore) {
-            this.highScore = this.score;
-            localStorage.setItem('spaceGameHighScore', this.highScore.toString());
-          }
+          this.saveScore();
         }
       }
     });
@@ -1283,6 +1529,132 @@ class SpaceGame {
            rect1.x + rect1.width > rect2.x &&
            rect1.y < rect2.y + rect2.height &&
            rect1.y + rect1.height > rect2.y;
+  }
+
+  saveScore() {
+    if (this.score > 0 && this.playerNickname) {
+      const leaderboard = this.loadLeaderboard();
+      leaderboard.push({
+        nickname: this.playerNickname,
+        score: this.score,
+        date: new Date().toISOString()
+      });
+      
+      // Sort by score descending and keep top 10
+      leaderboard.sort((a, b) => b.score - a.score);
+      const top10 = leaderboard.slice(0, 10);
+      
+      localStorage.setItem('spaceGameLeaderboard', JSON.stringify(top10));
+      
+      // Update high score
+      if (this.score > this.highScore) {
+        this.highScore = this.score;
+        localStorage.setItem('spaceGameHighScore', this.highScore.toString());
+      }
+      
+      this.drawLeaderboard();
+    }
+  }
+
+  loadLeaderboard() {
+    try {
+      const stored = localStorage.getItem('spaceGameLeaderboard');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  resetHighScores() {
+    // Clear leaderboard and high score from localStorage
+    localStorage.removeItem('spaceGameLeaderboard');
+    localStorage.removeItem('spaceGameHighScore');
+    
+    // Reset in-game high score
+    this.highScore = 0;
+    
+    // Redraw leaderboard to show empty state
+    this.drawLeaderboard();
+  }
+
+  drawLeaderboard() {
+    if (!this.leaderboardCtx || !this.leaderboardCanvas) return;
+    
+    const ctx = this.leaderboardCtx;
+    const canvas = this.leaderboardCanvas;
+    
+    // Clear canvas
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    const leaderboard = this.loadLeaderboard();
+    
+    if (leaderboard.length === 0) {
+      ctx.save();
+      ctx.fillStyle = '#00ff64';
+      ctx.font = '16px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = '#00ff64';
+      ctx.fillText('No scores yet. Be the first!', canvas.width / 2, canvas.height / 2);
+      ctx.restore();
+      return;
+    }
+    
+    ctx.save();
+    ctx.fillStyle = '#00ff64';
+    ctx.font = 'bold 18px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = '#00ff64';
+    
+    // Draw header
+    const headerY = 30;
+    ctx.fillText('Rank', 20, headerY);
+    ctx.fillText('Nickname', 100, headerY);
+    ctx.fillText('Score', canvas.width - 150, headerY);
+    
+    // Draw separator line
+    ctx.strokeStyle = '#00ff64';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(20, headerY + 10);
+    ctx.lineTo(canvas.width - 20, headerY + 10);
+    ctx.stroke();
+    
+    // Draw entries
+    ctx.font = '14px JetBrains Mono';
+    const startY = headerY + 35;
+    const lineHeight = 25;
+    const maxEntries = Math.min(10, leaderboard.length);
+    
+    for (let i = 0; i < maxEntries; i++) {
+      const entry = leaderboard[i];
+      const y = startY + i * lineHeight;
+      
+      // Highlight top 3
+      if (i < 3) {
+        ctx.fillStyle = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : '#cd7f32';
+        ctx.shadowColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : '#cd7f32';
+      } else {
+        ctx.fillStyle = '#00ff64';
+        ctx.shadowColor = '#00ff64';
+      }
+      
+      // Rank
+      ctx.fillText(`${i + 1}.`, 20, y);
+      
+      // Nickname (truncate if too long)
+      const nickname = entry.nickname.length > 20 ? entry.nickname.substring(0, 17) + '...' : entry.nickname;
+      ctx.fillText(nickname, 100, y);
+      
+      // Score
+      ctx.textAlign = 'right';
+      ctx.fillText(entry.score.toLocaleString(), canvas.width - 20, y);
+      ctx.textAlign = 'left';
+    }
+    
+    ctx.restore();
   }
 
   applyPowerUp(type) {
@@ -1311,6 +1683,11 @@ class SpaceGame {
     // Clear canvas
     this.ctx.fillStyle = 'rgba(10, 10, 10, 0.3)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if (this.state === 'nickname') {
+      this.drawNicknamePrompt();
+      return;
+    }
 
     if (this.state === 'menu') {
       this.drawMenu();
@@ -1376,8 +1753,53 @@ class SpaceGame {
     // Lives
     this.ctx.fillText(`Lives: ${this.player.lives}`, 10, 75);
     
-    // Stage progress
-    this.ctx.fillText(`Stage: ${this.waveManager.currentStage}/${this.waveManager.maxStages}`, 10, 100);
+    // Stage progress (unlimited stages)
+    this.ctx.fillText(`Stage: ${this.waveManager.currentStage}`, 10, 100);
+    
+    this.ctx.restore();
+  }
+
+  drawNicknamePrompt() {
+    this.cursorBlinkTimer++;
+    const showCursor = Math.floor(this.cursorBlinkTimer / 30) % 2 === 0;
+    
+    this.ctx.save();
+    this.ctx.fillStyle = 'rgba(10, 10, 10, 0.9)';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    this.ctx.fillStyle = '#00ff64';
+    this.ctx.font = 'bold 28px JetBrains Mono';
+    this.ctx.textAlign = 'center';
+    this.ctx.shadowBlur = 10;
+    this.ctx.shadowColor = '#00ff64';
+    
+    this.ctx.fillText('ENTER YOUR NICKNAME', this.canvas.width / 2, this.canvas.height / 2 - 60);
+    
+    this.ctx.font = '20px JetBrains Mono';
+    const displayText = this.nicknameInput || '';
+    const inputX = this.canvas.width / 2;
+    const inputY = this.canvas.height / 2;
+    
+    // Draw input box
+    this.ctx.strokeStyle = '#00ff64';
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeRect(inputX - 200, inputY - 20, 400, 40);
+    
+    // Draw nickname text
+    if (displayText) {
+      this.ctx.fillText(displayText, inputX, inputY + 8);
+    }
+    
+    // Draw blinking cursor
+    if (showCursor) {
+      const textWidth = displayText ? this.ctx.measureText(displayText).width : 0;
+      const cursorX = inputX - textWidth / 2 + textWidth;
+      this.ctx.fillRect(cursorX, inputY - 10, 2, 20);
+    }
+    
+    this.ctx.font = '16px Inter';
+    this.ctx.fillText('Press ENTER to confirm', this.canvas.width / 2, this.canvas.height / 2 + 50);
+    this.ctx.fillText('Max 15 characters', this.canvas.width / 2, this.canvas.height / 2 + 80);
     
     this.ctx.restore();
   }
@@ -1437,7 +1859,10 @@ class SpaceGame {
     this.ctx.font = '20px Inter';
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2);
     
-    if (this.score === this.highScore && this.score > 0) {
+    const leaderboard = this.loadLeaderboard();
+    const isNewHighScore = leaderboard.length > 0 && leaderboard[0].score === this.score && leaderboard[0].nickname === this.playerNickname;
+    
+    if (isNewHighScore && this.score > 0) {
       this.ctx.fillText('NEW HIGH SCORE!', this.canvas.width / 2, this.canvas.height / 2 + 40);
     }
     
@@ -1463,7 +1888,10 @@ class SpaceGame {
     this.ctx.fillText('All 50 Stages Completed!', this.canvas.width / 2, this.canvas.height / 2 - 30);
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
     
-    if (this.score === this.highScore && this.score > 0) {
+    const leaderboard = this.loadLeaderboard();
+    const isNewHighScore = leaderboard.length > 0 && leaderboard[0].score === this.score && leaderboard[0].nickname === this.playerNickname;
+    
+    if (isNewHighScore && this.score > 0) {
       this.ctx.fillText('NEW HIGH SCORE!', this.canvas.width / 2, this.canvas.height / 2 + 60);
     }
     
