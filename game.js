@@ -104,22 +104,111 @@ class Player {
       ctx.globalAlpha = 1;
     }
 
-    // Ship body
-    ctx.fillStyle = '#00ff64';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#00ff64';
+    // ID4 Alien Attacker style ship
+    const centerX = this.x + this.width / 2;
+    const centerY = this.y + this.height / 2;
+    const radiusX = this.width / 2;
+    const radiusY = this.height / 2.5;
     
-    // Draw triangular ship
+    // Metallic grey base with subtle blue-green tint
+    const baseColor = '#9da5a8'; // Metallic grey
+    const accentColor = '#7a8a8f'; // Darker grey-blue
+    const highlightColor = '#b8c5c9'; // Lighter grey-blue
+    
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#6a7a7f';
+    
+    // Main saucer body (bottom hull) - larger, flatter ellipse
+    ctx.fillStyle = baseColor;
     ctx.beginPath();
-    ctx.moveTo(this.x + this.width / 2, this.y);
-    ctx.lineTo(this.x, this.y + this.height);
-    ctx.lineTo(this.x + this.width, this.y + this.height);
-    ctx.closePath();
+    ctx.ellipse(centerX, centerY + radiusY * 0.4, radiusX * 1.05, radiusY * 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
-
-    // Ship details
-    ctx.fillStyle = '#00cc50';
-    ctx.fillRect(this.x + this.width / 2 - 2, this.y + 5, 4, 10);
+    
+    // Top saucer section (middle layer)
+    ctx.fillStyle = highlightColor;
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY - radiusY * 0.1, radiusX * 0.9, radiusY * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Central cockpit pod (distinctive feature of ID4 design)
+    const podWidth = radiusX * 0.4;
+    const podHeight = radiusY * 0.5;
+    ctx.fillStyle = accentColor;
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY - radiusY * 0.35, podWidth, podHeight, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Cockpit window/details
+    ctx.fillStyle = '#4a5a5f';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY - radiusY * 0.35, podWidth * 0.6, podHeight * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Panel lines and surface details (biomechanical texture)
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 1;
+    
+    // Outer ring panel line
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + radiusY * 0.4, radiusX * 0.85, radiusY * 0.65, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Middle ring panel line
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY - radiusY * 0.1, radiusX * 0.7, radiusY * 0.45, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Radial panel lines (from center outward)
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      const startX = centerX + Math.cos(angle) * podWidth * 0.5;
+      const startY = centerY - radiusY * 0.35 + Math.sin(angle) * podHeight * 0.5;
+      const endX = centerX + Math.cos(angle) * radiusX * 0.7;
+      const endY = centerY - radiusY * 0.1 + Math.sin(angle) * radiusY * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+    
+    // Small cannons on the sides/underside (ID4 style)
+    ctx.fillStyle = '#5a6a6f'; // Darker for cannons
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = '#4a5a5f';
+    
+    // Left side cannon (underside)
+    const leftCannonX = this.x + radiusX * 0.3;
+    const leftCannonY = centerY + radiusY * 0.2;
+    ctx.beginPath();
+    ctx.ellipse(leftCannonX, leftCannonY, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Cannon barrel
+    ctx.fillRect(leftCannonX - 2, leftCannonY + 2, 4, 3);
+    
+    // Right side cannon (underside)
+    const rightCannonX = this.x + this.width - radiusX * 0.3;
+    const rightCannonY = centerY + radiusY * 0.2;
+    ctx.beginPath();
+    ctx.ellipse(rightCannonX, rightCannonY, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Cannon barrel
+    ctx.fillRect(rightCannonX - 2, rightCannonY + 2, 4, 3);
+    
+    // Front center cannon (underside)
+    const frontCannonX = centerX;
+    const frontCannonY = centerY + radiusY * 0.3;
+    ctx.beginPath();
+    ctx.ellipse(frontCannonX, frontCannonY, 3, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Cannon barrel
+    ctx.fillRect(frontCannonX - 1.5, frontCannonY + 2, 3, 2);
+    
+    // Subtle metallic highlights
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY - radiusY * 0.1, radiusX * 0.3, radiusY * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   }
@@ -161,10 +250,29 @@ class Bullet {
 
   draw(ctx) {
     ctx.save();
-    ctx.fillStyle = this.type === 'player' ? '#00ff64' : '#ff0064';
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = this.type === 'player' ? '#00ff64' : '#ff0064';
-    ctx.fillRect(this.x - this.width / 2, this.y, this.width, this.height);
+    if (this.type === 'player') {
+      // Glowing red projectiles for player
+      ctx.fillStyle = '#ff0000';
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#ff0000';
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      
+      // Draw glowing projectile
+      ctx.fillRect(this.x - this.width / 2, this.y, this.width, this.height);
+      
+      // Add extra glow effect
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(this.x - this.width / 2 - 1, this.y - 1, this.width + 2, this.height + 2);
+      ctx.globalAlpha = 1;
+    } else {
+      // Enemy bullets stay the same
+      ctx.fillStyle = '#ff0064';
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#ff0064';
+      ctx.fillRect(this.x - this.width / 2, this.y, this.width, this.height);
+    }
     ctx.restore();
   }
 
@@ -228,34 +336,133 @@ class Enemy {
 
   draw(ctx) {
     ctx.save();
-    ctx.fillStyle = '#00ff64';
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = '#00ff64';
+    const centerX = this.x + this.width / 2;
+    const centerY = this.y + this.height / 2;
     
-    // Different shapes for different enemy types
+    // Different ship designs for different enemy types
     if (this.type === 'fast') {
-      // Diamond shape
+      // Sleek interceptor fighter - angular and fast-looking
+      ctx.fillStyle = '#4a9eff'; // Blue fighter
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#4a9eff';
+      
+      // Main body (arrowhead shape)
       ctx.beginPath();
-      ctx.moveTo(this.x + this.width / 2, this.y);
-      ctx.lineTo(this.x + this.width, this.y + this.height / 2);
-      ctx.lineTo(this.x + this.width / 2, this.y + this.height);
-      ctx.lineTo(this.x, this.y + this.height / 2);
+      ctx.moveTo(centerX, this.y); // Top point
+      ctx.lineTo(this.x + this.width * 0.2, this.y + this.height * 0.6); // Left side
+      ctx.lineTo(this.x + this.width * 0.3, this.y + this.height); // Left bottom
+      ctx.lineTo(this.x + this.width * 0.7, this.y + this.height); // Right bottom
+      ctx.lineTo(this.x + this.width * 0.8, this.y + this.height * 0.6); // Right side
       ctx.closePath();
       ctx.fill();
-    } else if (this.type === 'shooter') {
-      // Square with cross
-      ctx.fillRect(this.x, this.y, this.width, this.height);
-      ctx.strokeStyle = '#00cc50';
-      ctx.lineWidth = 2;
+      
+      // Side wings
+      ctx.fillStyle = '#3a8eef';
       ctx.beginPath();
-      ctx.moveTo(this.x, this.y);
-      ctx.lineTo(this.x + this.width, this.y + this.height);
-      ctx.moveTo(this.x + this.width, this.y);
-      ctx.lineTo(this.x, this.y + this.height);
+      ctx.moveTo(this.x + this.width * 0.15, this.y + this.height * 0.5);
+      ctx.lineTo(this.x - this.width * 0.1, this.y + this.height * 0.7);
+      ctx.lineTo(this.x + this.width * 0.2, this.y + this.height * 0.65);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.width * 0.85, this.y + this.height * 0.5);
+      ctx.lineTo(this.x + this.width * 1.1, this.y + this.height * 0.7);
+      ctx.lineTo(this.x + this.width * 0.8, this.y + this.height * 0.65);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Cockpit detail
+      ctx.fillStyle = '#2a7edf';
+      ctx.beginPath();
+      ctx.arc(centerX, this.y + this.height * 0.3, 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+    } else if (this.type === 'shooter') {
+      // Heavy gunship - larger, more menacing
+      ctx.fillStyle = '#ff6b4a'; // Red-orange gunship
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#ff6b4a';
+      
+      // Main hull (wider, more substantial)
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.width * 0.2, this.y);
+      ctx.lineTo(this.x + this.width * 0.8, this.y);
+      ctx.lineTo(this.x + this.width, this.y + this.height * 0.3);
+      ctx.lineTo(this.x + this.width, this.y + this.height * 0.7);
+      ctx.lineTo(this.x + this.width * 0.8, this.y + this.height);
+      ctx.lineTo(this.x + this.width * 0.2, this.y + this.height);
+      ctx.lineTo(this.x, this.y + this.height * 0.7);
+      ctx.lineTo(this.x, this.y + this.height * 0.3);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Central weapon pod
+      ctx.fillStyle = '#ff4a2a';
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY, this.width * 0.3, this.height * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Side weapon mounts
+      ctx.fillStyle = '#ff4a2a';
+      ctx.fillRect(this.x + this.width * 0.1, this.y + this.height * 0.4, 4, 6);
+      ctx.fillRect(this.x + this.width * 0.9 - 4, this.y + this.height * 0.4, 4, 6);
+      
+      // Weapon barrels
+      ctx.fillStyle = '#cc3a1a';
+      ctx.fillRect(this.x + this.width * 0.1 - 2, this.y + this.height * 0.45, 2, 4);
+      ctx.fillRect(this.x + this.width * 0.9, this.y + this.height * 0.45, 2, 4);
+      ctx.fillRect(centerX - 1, this.y + this.height * 0.8, 2, 4);
+      
+      // Details
+      ctx.strokeStyle = '#ff8a6a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.width * 0.3, this.y + this.height * 0.2);
+      ctx.lineTo(this.x + this.width * 0.7, this.y + this.height * 0.2);
       ctx.stroke();
+      
     } else {
-      // Basic rectangle
-      ctx.fillRect(this.x, this.y, this.width, this.height);
+      // Basic scout ship - simple but distinct
+      ctx.fillStyle = '#00ff64'; // Green scout
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#00ff64';
+      
+      // Main body (rounded triangle)
+      ctx.beginPath();
+      ctx.moveTo(centerX, this.y + this.height * 0.1); // Top
+      ctx.quadraticCurveTo(this.x, this.y + this.height * 0.5, centerX, this.y + this.height * 0.9);
+      ctx.quadraticCurveTo(this.x + this.width, this.y + this.height * 0.5, centerX, this.y + this.height * 0.1);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Side fins
+      ctx.fillStyle = '#00cc50';
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.width * 0.15, this.y + this.height * 0.4);
+      ctx.lineTo(this.x - this.width * 0.05, this.y + this.height * 0.5);
+      ctx.lineTo(this.x + this.width * 0.2, this.y + this.height * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.width * 0.85, this.y + this.height * 0.4);
+      ctx.lineTo(this.x + this.width * 1.05, this.y + this.height * 0.5);
+      ctx.lineTo(this.x + this.width * 0.8, this.y + this.height * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Central detail
+      ctx.fillStyle = '#00aa40';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Engine glow
+      ctx.fillStyle = '#00ff88';
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(centerX - 2, this.y + this.height * 0.85, 4, 3);
+      ctx.globalAlpha = 1;
     }
 
     ctx.restore();
