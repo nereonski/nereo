@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Impressum — Nereo</title>
+  <title>Space Game — Nereo</title>
   <link rel="icon" type="image/png" href="assets/images/Skulli.png" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="game.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -63,51 +64,39 @@
 
   <!-- Main Content -->
   <main>
-    <section class="section">
+    <!-- Space Game Section -->
+    <section id="space-game" class="section">
       <div class="container">
-        <div class="impressum-container">
-          <h1 class="impressum-title">Impressum</h1>
-          <p class="impressum-subtitle">(für private, nicht-kommerzielle Website)</p>
-          
-          <div class="impressum-content">
-            <h2>Angaben gemäß § 5 TMG</h2>
-            
-            <h3>Verantwortlich für den Inhalt dieser Website:</h3>
-            <p>
-              Nereo Kosinski<br>
-              Gerauer Straße 84<br>
-              60528 Frankfurt am Main<br>
-              Deutschland
-            </p>
-            
-            <h3>Kontakt:</h3>
-            <p>
-              E-Mail: <a href="mailto:hi@nereo.me">hi@nereo.me</a>
-            </p>
-            
-            <h3>Art der Website:</h3>
-            <p>
-              Dies ist eine private, nicht-kommerzielle Website.
-            </p>
-            <p>
-              Sie dient ausschließlich als persönliches Lern- und Dokumentationsprojekt im Bereich Webentwicklung, Design und digitale Medien. Es werden keine Dienstleistungen angeboten und keine geschäftlichen Tätigkeiten ausgeübt.
-            </p>
-            
-            <h3>Haftung für Inhalte:</h3>
-            <p>
-              Die Inhalte dieser Website wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte wird jedoch keine Gewähr übernommen.
-            </p>
-            
-            <h3>Haftung für Links:</h3>
-            <p>
-              Diese Website enthält ggf. Links zu externen Websites Dritter. Für deren Inhalte wird keine Verantwortung übernommen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich.
-            </p>
-            
-            <h3>Urheberrecht:</h3>
-            <p>
-              Alle Inhalte, sofern nicht anders angegeben, unterliegen dem Urheberrecht des Seitenbetreibers. Eine Vervielfältigung oder Weitergabe ist ohne vorherige schriftliche Zustimmung nicht gestattet.
-            </p>
+        <div class="game-container">
+          <h2 class="game-section-title">Space Game</h2>
+          <p class="game-description">
+            A classic space shooter built with vanilla JavaScript and HTML5 Canvas. 
+            Defend against waves of enemies, collect power-ups, and see how long you can survive!
+          </p>
+          <div class="game-canvas-container">
+            <canvas id="space-game-canvas" width="800" height="600"></canvas>
           </div>
+          <div class="game-controls">
+            <div class="game-control-item">
+              <span class="game-control-key">↑↓←→</span>
+              <span>or</span>
+              <span class="game-control-key">WASD</span>
+              <span>Move</span>
+            </div>
+            <div class="game-control-item">
+              <span class="game-control-key">SPACE</span>
+              <span>Shoot</span>
+            </div>
+            <div class="game-control-item">
+              <span class="game-control-key">P</span>
+              <span>Pause</span>
+            </div>
+            <div class="game-control-item">
+              <span class="game-control-key">R</span>
+              <span>Restart</span>
+            </div>
+          </div>
+          <p class="game-status">Press SPACEBAR to start playing</p>
         </div>
       </div>
     </section>
@@ -127,6 +116,7 @@
   </footer>
 
   <script src="script.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>
 
