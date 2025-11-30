@@ -9,7 +9,7 @@ class Player {
     this.x = canvas.width / 2 - this.width / 2;
     this.y = canvas.height - this.height - 30;
     this.speed = 2;
-    this.lives = 3;
+    this.lives = 6;
     this.shootCooldown = 0;
     this.shootDelay = 15;
     this.powerUps = {
@@ -17,7 +17,6 @@ class Player {
       doubleShot: false,
       shield: false
     };
-    this.shieldTimer = 0;
     this.invincible = false;
   }
 
@@ -41,14 +40,7 @@ class Player {
       this.shootCooldown--;
     }
 
-    // Shield timer
-    if (this.shieldTimer > 0) {
-      this.shieldTimer--;
-      if (this.shieldTimer === 0) {
-        this.powerUps.shield = false;
-        this.invincible = false;
-      }
-    }
+    // Shield no longer has a timer - it stays until hit
   }
 
   shoot() {
@@ -70,6 +62,16 @@ class Player {
 
   takeDamage() {
     if (this.invincible) return false;
+    
+    // If player has shield, remove it instead of taking damage
+    if (this.powerUps.shield) {
+      this.powerUps.shield = false;
+      this.invincible = true;
+      setTimeout(() => {
+        this.invincible = false;
+      }, 2000);
+      return false;
+    }
     
     this.lives--;
     this.invincible = true;
@@ -104,111 +106,176 @@ class Player {
       ctx.globalAlpha = 1;
     }
 
-    // ID4 Alien Attacker style ship
+    // Rocket ship design
     const centerX = this.x + this.width / 2;
     const centerY = this.y + this.height / 2;
-    const radiusX = this.width / 2;
-    const radiusY = this.height / 2.5;
+    const rocketWidth = this.width * 0.6;
+    const rocketHeight = this.height * 0.9;
     
-    // Metallic grey base with subtle blue-green tint
-    const baseColor = '#9da5a8'; // Metallic grey
-    const accentColor = '#7a8a8f'; // Darker grey-blue
-    const highlightColor = '#b8c5c9'; // Lighter grey-blue
+    // Colors
+    const rocketBodyColor = '#9da5a8'; // Metallic grey
+    const rocketAccentColor = '#7a8a8f'; // Darker grey
+    const rocketHighlightColor = '#b8c5c9'; // Lighter grey
+    const cannonColor = '#5a6a6f'; // Dark grey for cannons
     
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 8;
     ctx.shadowColor = '#6a7a7f';
     
-    // Main saucer body (bottom hull) - larger, flatter ellipse
-    ctx.fillStyle = baseColor;
+    // Exhaust jet (animated flames at the bottom)
+    const exhaustY = this.y + this.height;
+    const exhaustWidth = rocketWidth * 0.7;
+    const time = Date.now() * 0.01; // For animation
+    const flameVariation = Math.sin(time) * 2 + Math.cos(time * 1.5) * 1.5;
+    
+    // Outer flame (orange/yellow)
+    ctx.fillStyle = '#ff8800';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ff8800';
     ctx.beginPath();
-    ctx.ellipse(centerX, centerY + radiusY * 0.4, radiusX * 1.05, radiusY * 0.8, 0, 0, Math.PI * 2);
+    ctx.moveTo(centerX - exhaustWidth / 2, exhaustY);
+    ctx.lineTo(centerX - exhaustWidth / 3, exhaustY + 8 + flameVariation);
+    ctx.lineTo(centerX, exhaustY + 12 + flameVariation * 1.2);
+    ctx.lineTo(centerX + exhaustWidth / 3, exhaustY + 8 + flameVariation);
+    ctx.lineTo(centerX + exhaustWidth / 2, exhaustY);
+    ctx.closePath();
     ctx.fill();
     
-    // Top saucer section (middle layer)
-    ctx.fillStyle = highlightColor;
+    // Inner flame (bright yellow/white)
+    ctx.fillStyle = '#ffcc00';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ffcc00';
     ctx.beginPath();
-    ctx.ellipse(centerX, centerY - radiusY * 0.1, radiusX * 0.9, radiusY * 0.6, 0, 0, Math.PI * 2);
+    ctx.moveTo(centerX - exhaustWidth / 3, exhaustY);
+    ctx.lineTo(centerX - exhaustWidth / 5, exhaustY + 6 + flameVariation * 0.8);
+    ctx.lineTo(centerX, exhaustY + 9 + flameVariation);
+    ctx.lineTo(centerX + exhaustWidth / 5, exhaustY + 6 + flameVariation * 0.8);
+    ctx.lineTo(centerX + exhaustWidth / 3, exhaustY);
+    ctx.closePath();
     ctx.fill();
     
-    // Central cockpit pod (distinctive feature of ID4 design)
-    const podWidth = radiusX * 0.4;
-    const podHeight = radiusY * 0.5;
-    ctx.fillStyle = accentColor;
+    // Core flame (white hot)
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(centerX - exhaustWidth / 5, exhaustY);
+    ctx.lineTo(centerX, exhaustY + 5 + flameVariation * 0.6);
+    ctx.lineTo(centerX + exhaustWidth / 5, exhaustY);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#6a7a7f';
+    
+    // Main rocket body (pointed at top, wider at bottom)
+    ctx.fillStyle = rocketBodyColor;
+    ctx.beginPath();
+    ctx.moveTo(centerX, this.y); // Top point
+    ctx.lineTo(this.x + this.width * 0.3, this.y + rocketHeight * 0.4); // Left side top
+    ctx.lineTo(this.x + this.width * 0.25, this.y + rocketHeight * 0.9); // Left side bottom
+    ctx.lineTo(centerX, exhaustY - 2); // Bottom center
+    ctx.lineTo(this.x + this.width * 0.75, this.y + rocketHeight * 0.9); // Right side bottom
+    ctx.lineTo(this.x + this.width * 0.7, this.y + rocketHeight * 0.4); // Right side top
+    ctx.closePath();
+    ctx.fill();
+    
+    // Rocket body highlight (lighter section)
+    ctx.fillStyle = rocketHighlightColor;
+    ctx.beginPath();
+    ctx.moveTo(centerX, this.y + rocketHeight * 0.1);
+    ctx.lineTo(this.x + this.width * 0.35, this.y + rocketHeight * 0.5);
+    ctx.lineTo(centerX, this.y + rocketHeight * 0.85);
+    ctx.lineTo(this.x + this.width * 0.65, this.y + rocketHeight * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Cockpit window (near the top)
+    ctx.fillStyle = '#4a5a5f';
+    ctx.shadowBlur = 3;
+    ctx.beginPath();
+    ctx.arc(centerX, this.y + rocketHeight * 0.25, rocketWidth * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Cockpit window highlight
+    ctx.fillStyle = '#6a8a9f';
+    ctx.beginPath();
+    ctx.arc(centerX, this.y + rocketHeight * 0.25, rocketWidth * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Panel lines on rocket body
+    ctx.strokeStyle = rocketAccentColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(centerX, this.y + rocketHeight * 0.3);
+    ctx.lineTo(centerX, this.y + rocketHeight * 0.8);
+    ctx.stroke();
+    
+    // Small wings on the sides
+    const wingWidth = this.width * 0.15;
+    const wingHeight = this.height * 0.25;
+    const wingY = this.y + rocketHeight * 0.6;
+    
+    // Left wing
+    ctx.fillStyle = rocketBodyColor;
     ctx.shadowBlur = 5;
     ctx.beginPath();
-    ctx.ellipse(centerX, centerY - radiusY * 0.35, podWidth, podHeight, 0, 0, Math.PI * 2);
+    ctx.moveTo(this.x + this.width * 0.25, wingY);
+    ctx.lineTo(this.x + this.width * 0.1, wingY + wingHeight * 0.5);
+    ctx.lineTo(this.x + this.width * 0.2, wingY + wingHeight);
+    ctx.lineTo(this.x + this.width * 0.3, wingY + wingHeight * 0.7);
+    ctx.closePath();
     ctx.fill();
     
-    // Cockpit window/details
-    ctx.fillStyle = '#4a5a5f';
-    ctx.beginPath();
-    ctx.ellipse(centerX, centerY - radiusY * 0.35, podWidth * 0.6, podHeight * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Panel lines and surface details (biomechanical texture)
-    ctx.strokeStyle = accentColor;
+    // Left wing detail
+    ctx.strokeStyle = rocketAccentColor;
     ctx.lineWidth = 1;
-    
-    // Outer ring panel line
     ctx.beginPath();
-    ctx.ellipse(centerX, centerY + radiusY * 0.4, radiusX * 0.85, radiusY * 0.65, 0, 0, Math.PI * 2);
+    ctx.moveTo(this.x + this.width * 0.25, wingY);
+    ctx.lineTo(this.x + this.width * 0.2, wingY + wingHeight);
     ctx.stroke();
     
-    // Middle ring panel line
+    // Right wing
+    ctx.fillStyle = rocketBodyColor;
     ctx.beginPath();
-    ctx.ellipse(centerX, centerY - radiusY * 0.1, radiusX * 0.7, radiusY * 0.45, 0, 0, Math.PI * 2);
+    ctx.moveTo(this.x + this.width * 0.75, wingY);
+    ctx.lineTo(this.x + this.width * 0.9, wingY + wingHeight * 0.5);
+    ctx.lineTo(this.x + this.width * 0.8, wingY + wingHeight);
+    ctx.lineTo(this.x + this.width * 0.7, wingY + wingHeight * 0.7);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Right wing detail
+    ctx.beginPath();
+    ctx.moveTo(this.x + this.width * 0.75, wingY);
+    ctx.lineTo(this.x + this.width * 0.8, wingY + wingHeight);
     ctx.stroke();
     
-    // Radial panel lines (from center outward)
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 * i) / 8;
-      const startX = centerX + Math.cos(angle) * podWidth * 0.5;
-      const startY = centerY - radiusY * 0.35 + Math.sin(angle) * podHeight * 0.5;
-      const endX = centerX + Math.cos(angle) * radiusX * 0.7;
-      const endY = centerY - radiusY * 0.1 + Math.sin(angle) * radiusY * 0.3;
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
-      ctx.lineTo(endX, endY);
-      ctx.stroke();
-    }
+    // Cannons on the sides
+    const cannonSize = 3;
+    const cannonY = this.y + rocketHeight * 0.5;
     
-    // Small cannons on the sides/underside (ID4 style)
-    ctx.fillStyle = '#5a6a6f'; // Darker for cannons
+    // Left cannon
+    ctx.fillStyle = cannonColor;
     ctx.shadowBlur = 3;
     ctx.shadowColor = '#4a5a5f';
-    
-    // Left side cannon (underside)
-    const leftCannonX = this.x + radiusX * 0.3;
-    const leftCannonY = centerY + radiusY * 0.2;
     ctx.beginPath();
-    ctx.ellipse(leftCannonX, leftCannonY, 4, 3, 0, 0, Math.PI * 2);
+    ctx.arc(this.x + this.width * 0.2, cannonY, cannonSize, 0, Math.PI * 2);
     ctx.fill();
     // Cannon barrel
-    ctx.fillRect(leftCannonX - 2, leftCannonY + 2, 4, 3);
+    ctx.fillRect(this.x + this.width * 0.2 - cannonSize, cannonY - cannonSize / 2, cannonSize * 2, cannonSize);
     
-    // Right side cannon (underside)
-    const rightCannonX = this.x + this.width - radiusX * 0.3;
-    const rightCannonY = centerY + radiusY * 0.2;
+    // Right cannon
     ctx.beginPath();
-    ctx.ellipse(rightCannonX, rightCannonY, 4, 3, 0, 0, Math.PI * 2);
+    ctx.arc(this.x + this.width * 0.8, cannonY, cannonSize, 0, Math.PI * 2);
     ctx.fill();
     // Cannon barrel
-    ctx.fillRect(rightCannonX - 2, rightCannonY + 2, 4, 3);
+    ctx.fillRect(this.x + this.width * 0.8 - cannonSize, cannonY - cannonSize / 2, cannonSize * 2, cannonSize);
     
-    // Front center cannon (underside)
-    const frontCannonX = centerX;
-    const frontCannonY = centerY + radiusY * 0.3;
+    // Front center cannon (smaller)
     ctx.beginPath();
-    ctx.ellipse(frontCannonX, frontCannonY, 3, 2, 0, 0, Math.PI * 2);
+    ctx.arc(centerX, this.y + rocketHeight * 0.7, cannonSize * 0.7, 0, Math.PI * 2);
     ctx.fill();
-    // Cannon barrel
-    ctx.fillRect(frontCannonX - 1.5, frontCannonY + 2, 3, 2);
-    
-    // Subtle metallic highlights
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.beginPath();
-    ctx.ellipse(centerX, centerY - radiusY * 0.1, radiusX * 0.3, radiusY * 0.2, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(centerX - cannonSize * 0.7, this.y + rocketHeight * 0.7 - cannonSize * 0.35, cannonSize * 1.4, cannonSize * 0.7);
 
     ctx.restore();
   }
@@ -216,13 +283,12 @@ class Player {
   reset() {
     this.x = this.canvas.width / 2 - this.width / 2;
     this.y = this.canvas.height - this.height - 30;
-    this.lives = 3;
+    this.lives = 6;
     this.powerUps = {
       rapidFire: false,
       doubleShot: false,
       shield: false
     };
-    this.shieldTimer = 0;
     this.invincible = false;
   }
 }
@@ -295,7 +361,7 @@ class Enemy {
     this.width = 30;
     this.height = 30;
     // Base speeds are slower, then multiplied by stage-based multiplier
-    const baseSpeed = type === 'fast' ? 1 : 0.5;
+    const baseSpeed = type === 'fast' ? 0.5 : 0.25;
     this.speed = baseSpeed * speedMultiplier;
     this.active = true;
     this.shootCooldown = 0;
@@ -483,7 +549,7 @@ class PowerUp {
   constructor(x, y, type) {
     this.x = x;
     this.y = y;
-    this.type = type; // 'rapidFire', 'doubleShot', 'shield'
+    this.type = type; // 'rapidFire', 'doubleShot', 'shield', 'oneUp'
     this.width = 20;
     this.height = 20;
     this.speed = 2;
@@ -535,6 +601,24 @@ class PowerUp {
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.fill();
+    } else if (this.type === 'oneUp') {
+      // Plus sign for extra life (one-up)
+      ctx.fillStyle = '#ff0064';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#ff0064';
+      // Draw a plus sign
+      const barWidth = this.width / 4;
+      const barLength = this.width * 0.7;
+      // Vertical bar
+      ctx.fillRect(-barWidth / 2, -barLength / 2, barWidth, barLength);
+      // Horizontal bar
+      ctx.fillRect(-barLength / 2, -barWidth / 2, barLength, barWidth);
+      // Add outer glow
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = '#ff4488';
+      ctx.fillRect(-barWidth / 2 - 1, -barLength / 2 - 1, barWidth + 2, barLength + 2);
+      ctx.fillRect(-barLength / 2 - 1, -barWidth / 2 - 1, barLength + 2, barWidth + 2);
+      ctx.globalAlpha = 1;
     }
     
     ctx.restore();
@@ -554,7 +638,7 @@ class PowerUp {
 class WaveManager {
   constructor() {
     this.currentStage = 0;
-    this.maxStages = 20;
+    this.maxStages = 50;
     this.enemiesPerStage = 3;
     this.enemiesSpawned = 0;
     this.spawnTimer = 0;
@@ -570,18 +654,21 @@ class WaveManager {
     this.stageCompleted = false; // Reset completion flag for new stage
     
     // Gradually increase enemies per stage, but cap it
-    // Stages 1-5: 6-8 enemies (longer stages)
-    // Stages 6-10: 8-10 enemies
-    // Stages 11-15: 10-12 enemies
-    // Stages 16-20: 12-14 enemies
-    if (this.currentStage <= 5) {
+    // Stages 1-10: 6 enemies
+    // Stages 11-20: 8 enemies
+    // Stages 21-30: 10 enemies
+    // Stages 31-40: 12 enemies
+    // Stages 41-50: 14 enemies
+    if (this.currentStage <= 10) {
       this.enemiesPerStage = 6;
-    } else if (this.currentStage <= 10) {
+    } else if (this.currentStage <= 20) {
       this.enemiesPerStage = 8;
-    } else if (this.currentStage <= 15) {
+    } else if (this.currentStage <= 30) {
       this.enemiesPerStage = 10;
-    } else {
+    } else if (this.currentStage <= 40) {
       this.enemiesPerStage = 12;
+    } else {
+      this.enemiesPerStage = 14;
     }
     
     // Increase spawn delay to make stages last longer
@@ -609,18 +696,18 @@ class WaveManager {
       const rand = Math.random();
       const stage = this.currentStage;
       
-      if (stage <= 3) {
-        // Stages 1-3: Only basic enemies
+      if (stage <= 5) {
+        // Stages 1-5: Only basic enemies
         type = 'basic';
-      } else if (stage <= 7) {
-        // Stages 4-7: Mix of basic and fast enemies
+      } else if (stage <= 15) {
+        // Stages 6-15: Mix of basic and fast enemies
         if (rand < 0.35) {
           type = 'fast';
         } else {
           type = 'basic';
         }
-      } else if (stage <= 12) {
-        // Stages 8-12: All types, more balanced
+      } else if (stage <= 30) {
+        // Stages 16-30: All types, more balanced
         if (rand < 0.25) {
           type = 'fast';
         } else if (rand < 0.5) {
@@ -629,7 +716,7 @@ class WaveManager {
           type = 'basic';
         }
       } else {
-        // Stages 13-20: More challenging mix
+        // Stages 31-50: More challenging mix
         if (rand < 0.3) {
           type = 'fast';
         } else if (rand < 0.6) {
@@ -639,12 +726,13 @@ class WaveManager {
         }
       }
       
-      // Calculate speed multiplier: increases every 5 stages
+      // Calculate speed multiplier: increases every 5 stages, capped at 2.0
       // Stage 1-5: multiplier 1.0
-      // Stage 6-10: multiplier 1.2
-      // Stage 11-15: multiplier 1.4
-      // Stage 16-20: multiplier 1.6
-      const speedMultiplier = 1.0 + (Math.floor((this.currentStage - 1) / 5) * 0.2);
+      // Stage 6-10: multiplier 1.1
+      // Stage 11-15: multiplier 1.2
+      // Stage 16-20: multiplier 1.3
+      // ... continues up to stage 46-50: multiplier 2.0
+      const speedMultiplier = Math.min(1.0 + (Math.floor((this.currentStage - 1) / 5) * 0.1), 2.0);
       
       return new Enemy(x, y, type, speedMultiplier);
     }
@@ -710,6 +798,200 @@ class Particle {
   }
 }
 
+// Fire particle for explosions
+class FireParticle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    // More circular/round distribution - random angle in full circle, but upward bias
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 2 + 1.5; // Smaller, slower particles
+    this.vx = Math.cos(angle) * speed * 0.6; // Reduced horizontal spread
+    this.vy = Math.sin(angle) * speed - 0.5; // Slight upward bias
+    this.life = 35;
+    this.maxLife = 35;
+    this.size = Math.random() * 2.5 + 2; // Smaller particles
+    // Fire colors transition from white/yellow to orange to red
+    this.colorPhase = Math.random();
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    // Slow down over time
+    this.vx *= 0.97;
+    this.vy *= 0.97;
+    this.life--;
+    // Fire grows then shrinks (less dramatic)
+    if (this.life > this.maxLife * 0.5) {
+      this.size += 0.15;
+    } else {
+      this.size -= 0.25;
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const alpha = this.life / this.maxLife;
+    const lifeRatio = 1 - (this.life / this.maxLife);
+    
+    // Color transitions: white -> yellow -> orange -> red -> dark red
+    let color;
+    if (lifeRatio < 0.2) {
+      // White to yellow
+      const t = lifeRatio / 0.2;
+      color = `rgb(255, ${255 - t * 100}, ${255 - t * 200})`;
+    } else if (lifeRatio < 0.5) {
+      // Yellow to orange
+      const t = (lifeRatio - 0.2) / 0.3;
+      color = `rgb(255, ${155 - t * 55}, ${155 - t * 155})`;
+    } else if (lifeRatio < 0.8) {
+      // Orange to red
+      const t = (lifeRatio - 0.5) / 0.3;
+      color = `rgb(255, ${100 - t * 100}, 0)`;
+    } else {
+      // Red to dark red
+      const t = (lifeRatio - 0.8) / 0.2;
+      color = `rgb(${255 - t * 155}, ${0}, 0)`;
+    }
+    
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.shadowBlur = this.size * 2;
+    ctx.shadowColor = color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  isDead() {
+    return this.life <= 0 || this.size <= 0;
+  }
+}
+
+// Debris particle for breaking parts
+class DebrisParticle {
+  constructor(x, y, color = '#9da5a8') {
+    this.x = x;
+    this.y = y;
+    // Debris flies in all directions
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 4 + 1.5; // Slower, smaller spread
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotationSpeed = (Math.random() - 0.5) * 0.3;
+    this.life = 45;
+    this.maxLife = 45;
+    this.size = Math.random() * 2.5 + 1.5; // Smaller debris
+    this.color = color;
+    this.shape = Math.random() < 0.5 ? 'rect' : 'circle'; // Random shape
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.rotation += this.rotationSpeed;
+    // Gravity effect
+    this.vy += 0.15;
+    // Friction
+    this.vx *= 0.98;
+    this.vy *= 0.98;
+    this.life--;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const alpha = this.life / this.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = this.color;
+    
+    if (this.shape === 'rect') {
+      // Rectangular debris piece
+      ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+    } else {
+      // Circular debris piece
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+
+  isDead() {
+    return this.life <= 0;
+  }
+}
+
+// Smoke particle for explosions
+class SmokeParticle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    // Smoke rises upward with slight random spread
+    const angle = (Math.random() - 0.5) * Math.PI * 0.4; // -20 to 20 degrees
+    const speed = Math.random() * 1.5 + 1;
+    this.vx = Math.sin(angle) * speed * 0.5;
+    this.vy = -Math.abs(Math.cos(angle) * speed) - 0.8; // Strong upward movement
+    this.life = 60;
+    this.maxLife = 60;
+    this.size = Math.random() * 3 + 4; // Larger than fire particles
+    this.maxSize = this.size * 1.5; // Smoke expands as it rises
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    // Slow down over time
+    this.vx *= 0.95;
+    this.vy *= 0.96;
+    this.life--;
+    // Smoke expands as it rises
+    if (this.size < this.maxSize) {
+      this.size += 0.2;
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const alpha = Math.min(this.life / this.maxLife, 0.6); // Smoke is semi-transparent
+    ctx.globalAlpha = alpha;
+    
+    // Smoke color transitions from dark grey to lighter grey
+    const lifeRatio = 1 - (this.life / this.maxLife);
+    const greyValue = Math.floor(40 + lifeRatio * 60); // 40 to 100
+    const color = `rgb(${greyValue}, ${greyValue}, ${greyValue})`;
+    
+    ctx.fillStyle = color;
+    ctx.shadowBlur = this.size * 1.5;
+    ctx.shadowColor = `rgba(${greyValue}, ${greyValue}, ${greyValue}, 0.5)`;
+    
+    // Draw smoke as a soft circle
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add a second layer for more depth
+    ctx.globalAlpha = alpha * 0.5;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  }
+
+  isDead() {
+    return this.life <= 0;
+  }
+}
+
 // Main Game class
 class SpaceGame {
   constructor(canvas) {
@@ -729,6 +1011,8 @@ class SpaceGame {
     this.highScore = parseInt(localStorage.getItem('spaceGameHighScore') || '0');
     this.keys = {};
     this.lastShot = false;
+    this.oneUpTimer = 0;
+    this.oneUpSpawnInterval = 3600; // Spawn one-up every ~60 seconds at 60fps
     
     this.setupEventListeners();
     this.resizeCanvas();
@@ -807,6 +1091,7 @@ class SpaceGame {
     this.particles = [];
     this.waveManager = new WaveManager();
     this.score = 0;
+    this.oneUpTimer = 0;
     this.state = 'playing';
     this.waveManager.startStage();
   }
@@ -830,7 +1115,7 @@ class SpaceGame {
       
       // Only check for victory if we've actually completed at least one stage with enemies
       // and we've completed all stages (currentStage represents the stage we just completed)
-      // After completing stage 20, currentStage will be 20, which equals maxStages
+      // After completing stage 50, currentStage will be 50, which equals maxStages
       if (this.waveManager.currentStage > 0 && 
           this.waveManager.currentStage === this.waveManager.maxStages &&
           this.waveManager.enemiesSpawned > 0) {
@@ -869,6 +1154,15 @@ class SpaceGame {
     this.powerUps.forEach(powerUp => powerUp.update());
     this.powerUps = this.powerUps.filter(p => p.active);
 
+    // Spawn one-up periodically
+    this.oneUpTimer++;
+    if (this.oneUpTimer >= this.oneUpSpawnInterval) {
+      this.oneUpTimer = 0;
+      // Spawn one-up at random x position from top of screen
+      const x = Math.random() * (this.canvas.width - 20);
+      this.powerUps.push(new PowerUp(x, -20, 'oneUp'));
+    }
+
     // Update particles
     this.particles.forEach(particle => particle.update());
     this.particles = this.particles.filter(p => !p.isDead());
@@ -881,9 +1175,28 @@ class SpaceGame {
           enemy.active = false;
           this.score += enemy.points;
           
-          // Create explosion particles
-          for (let i = 0; i < 10; i++) {
-            this.particles.push(new Particle(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2));
+          // Create realistic explosion with fire, debris, and smoke
+          const explosionX = enemy.x + enemy.width / 2;
+          const explosionY = enemy.y + enemy.height / 2;
+          
+          // Create fire particles (smaller, more round explosion - 4-6 particles)
+          const fireCount = Math.floor(Math.random() * 3) + 4;
+          for (let i = 0; i < fireCount; i++) {
+            this.particles.push(new FireParticle(explosionX, explosionY));
+          }
+          
+          // Create debris particles (fewer particles - 3-5 particles)
+          const debrisCount = Math.floor(Math.random() * 3) + 3;
+          const debrisColors = ['#9da5a8', '#7a8a8f', '#b8c5c9', '#5a6a6f', '#4a5a5f'];
+          for (let i = 0; i < debrisCount; i++) {
+            const color = debrisColors[Math.floor(Math.random() * debrisColors.length)];
+            this.particles.push(new DebrisParticle(explosionX, explosionY, color));
+          }
+          
+          // Create smoke particles (3-5 particles)
+          const smokeCount = Math.floor(Math.random() * 3) + 3;
+          for (let i = 0; i < smokeCount; i++) {
+            this.particles.push(new SmokeParticle(explosionX, explosionY));
           }
           
           // Chance to spawn power-up
@@ -915,6 +1228,31 @@ class SpaceGame {
     this.enemies.forEach(enemy => {
       if (this.checkCollision(enemy.getBounds(), this.player.getBounds())) {
         enemy.active = false;
+        
+        // Create explosion when enemy hits player
+        const explosionX = enemy.x + enemy.width / 2;
+        const explosionY = enemy.y + enemy.height / 2;
+        
+        // Create fire particles (smaller, more round explosion - 4-6 particles)
+        const fireCount = Math.floor(Math.random() * 3) + 4;
+        for (let i = 0; i < fireCount; i++) {
+          this.particles.push(new FireParticle(explosionX, explosionY));
+        }
+        
+        // Create debris particles (fewer particles - 3-5 particles)
+        const debrisCount = Math.floor(Math.random() * 3) + 3;
+        const debrisColors = ['#9da5a8', '#7a8a8f', '#b8c5c9', '#5a6a6f', '#4a5a5f'];
+        for (let i = 0; i < debrisCount; i++) {
+          const color = debrisColors[Math.floor(Math.random() * debrisColors.length)];
+          this.particles.push(new DebrisParticle(explosionX, explosionY, color));
+        }
+        
+        // Create smoke particles (3-5 particles)
+        const smokeCount = Math.floor(Math.random() * 3) + 3;
+        for (let i = 0; i < smokeCount; i++) {
+          this.particles.push(new SmokeParticle(explosionX, explosionY));
+        }
+        
         const isDead = this.player.takeDamage();
         if (isDead) {
           this.state = 'gameover';
@@ -949,19 +1287,23 @@ class SpaceGame {
 
   applyPowerUp(type) {
     if (type === 'rapidFire') {
+      // Permanent power-up - no timeout
       this.player.powerUps.rapidFire = true;
-      setTimeout(() => {
-        this.player.powerUps.rapidFire = false;
-      }, 10000);
     } else if (type === 'doubleShot') {
+      // Permanent power-up - no timeout
       this.player.powerUps.doubleShot = true;
-      setTimeout(() => {
-        this.player.powerUps.doubleShot = false;
-      }, 10000);
     } else if (type === 'shield') {
+      // Shield stays until player gets hit
       this.player.powerUps.shield = true;
+      // Give brief invincibility when picking up shield
       this.player.invincible = true;
-      this.player.shieldTimer = 600; // 10 seconds at 60fps
+      setTimeout(() => {
+        // Remove invincibility after brief period, shield remains active
+        this.player.invincible = false;
+      }, 2000);
+    } else if (type === 'oneUp') {
+      // Add an extra life
+      this.player.lives++;
     }
   }
 
@@ -1118,7 +1460,7 @@ class SpaceGame {
     this.ctx.fillText('VICTORY!', this.canvas.width / 2, this.canvas.height / 2 - 80);
     
     this.ctx.font = '20px Inter';
-    this.ctx.fillText('All 20 Stages Completed!', this.canvas.width / 2, this.canvas.height / 2 - 30);
+    this.ctx.fillText('All 50 Stages Completed!', this.canvas.width / 2, this.canvas.height / 2 - 30);
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
     
     if (this.score === this.highScore && this.score > 0) {
