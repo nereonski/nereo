@@ -363,10 +363,136 @@
   }
 }
 
-/* Touch controls for mobile (optional future enhancement) */
+/* Mobile Controls */
+.mobile-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 20px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.mobile-controls > * {
+  pointer-events: auto;
+}
+
+.mobile-movement-area {
+  width: 150px;
+  height: 150px;
+  background: rgba(0, 255, 100, 0.1);
+  border: 2px solid rgba(0, 255, 100, 0.3);
+  border-radius: 50%;
+  position: relative;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-joystick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 255, 100, 0.5);
+  border: 2px solid rgba(0, 255, 100, 0.8);
+  border-radius: 50%;
+  transition: transform 0.1s ease-out;
+  pointer-events: none;
+}
+
+.mobile-shoot-btn {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 0, 0, 0.2);
+  border: 3px solid rgba(255, 0, 0, 0.6);
+  border-radius: 50%;
+  color: rgba(255, 0, 0, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.mobile-shoot-btn:active {
+  background: rgba(255, 0, 0, 0.4);
+  border-color: rgba(255, 0, 0, 1);
+  transform: scale(0.9);
+}
+
+.mobile-shoot-btn svg {
+  width: 40px;
+  height: 40px;
+  stroke: currentColor;
+}
+
+[data-theme="light"] .mobile-movement-area {
+  background: rgba(0, 170, 85, 0.15);
+  border-color: rgba(0, 170, 85, 0.4);
+}
+
+[data-theme="light"] .mobile-joystick {
+  background: rgba(0, 170, 85, 0.4);
+  border-color: rgba(0, 170, 85, 0.7);
+}
+
+[data-theme="light"] .mobile-shoot-btn {
+  background: rgba(255, 0, 0, 0.15);
+  border-color: rgba(255, 0, 0, 0.5);
+  color: rgba(200, 0, 0, 0.9);
+}
+
+/* Touch controls for mobile */
 @media (max-width: 768px) {
   .game-canvas-container {
     touch-action: none;
+    position: relative;
+  }
+
+  .mobile-controls {
+    display: flex;
+  }
+
+  #space-game-canvas {
+    touch-action: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-movement-area {
+    width: 120px;
+    height: 120px;
+  }
+
+  .mobile-joystick {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mobile-shoot-btn {
+    width: 70px;
+    height: 70px;
+  }
+
+  .mobile-shoot-btn svg {
+    width: 35px;
+    height: 35px;
+  }
+
+  .mobile-controls {
+    padding: 0 15px;
+    bottom: 15px;
   }
 }
 

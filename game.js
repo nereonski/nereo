@@ -20,19 +20,22 @@ class Player {
     this.invincible = false;
   }
 
-  update(keys) {
-    // Movement
-    if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
-      this.x = Math.max(0, this.x - this.speed);
+  update(keys, touchX = 0, touchY = 0) {
+    // Movement - keyboard or touch
+    // For touch, use the normalized values directly; for keyboard, use -1/0/1
+    const moveX = keys['ArrowLeft'] || keys['a'] || keys['A'] ? -1 : 
+                  keys['ArrowRight'] || keys['d'] || keys['D'] ? 1 : touchX;
+    const moveY = keys['ArrowUp'] || keys['w'] || keys['W'] ? -1 : 
+                  keys['ArrowDown'] || keys['s'] || keys['S'] ? 1 : touchY;
+    
+    // Use slightly higher speed multiplier for touch to compensate for smaller movement range
+    const speedMultiplier = (touchX !== 0 || touchY !== 0) ? 1.5 : 1;
+    
+    if (moveX !== 0) {
+      this.x = Math.max(0, Math.min(this.canvas.width - this.width, this.x + moveX * this.speed * speedMultiplier));
     }
-    if (keys['ArrowRight'] || keys['d'] || keys['D']) {
-      this.x = Math.min(this.canvas.width - this.width, this.x + this.speed);
-    }
-    if (keys['ArrowUp'] || keys['w'] || keys['W']) {
-      this.y = Math.max(0, this.y - this.speed);
-    }
-    if (keys['ArrowDown'] || keys['s'] || keys['S']) {
-      this.y = Math.min(this.canvas.height - this.height, this.y + this.speed);
+    if (moveY !== 0) {
+      this.y = Math.max(0, Math.min(this.canvas.height - this.height, this.y + moveY * this.speed * speedMultiplier));
     }
 
     // Shooting cooldown
@@ -1025,6 +1028,7 @@ class SpaceGame {
     this.setupEventListeners();
     this.setupFullscreen();
     this.setupExitButton();
+    this.setupMobileControls();
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
     this.loadLeaderboard();
@@ -1040,6 +1044,208 @@ class SpaceGame {
       e.stopPropagation();
       this.exitGame();
     });
+  }
+
+  setupMobileControls() {
+    // Touch movement tracking
+    this.touchX = 0;
+    this.touchY = 0;
+    this.isTouching = false;
+    this.movementArea = document.getElementById('movement-area');
+    this.joystick = document.getElementById('joystick');
+    this.shootButton = document.getElementById('mobile-shoot-btn');
+    this.mobileControls = document.getElementById('mobile-controls');
+    
+    // Only show mobile controls on touch devices and when playing
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (this.mobileControls) {
+      this.mobileControls.style.display = isTouchDevice ? 'flex' : 'none';
+      // Initially hidden until game starts
+      if (isTouchDevice) {
+        this.updateMobileControlsVisibility();
+      }
+    }
+
+    if (!this.movementArea || !this.joystick) return;
+
+    // Movement area touch handlers
+    const handleTouchStart = (e) => {
+      if (this.state !== 'playing' && this.state !== 'paused') return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.isTouching = true;
+      const rect = this.movementArea.getBoundingClientRect();
+      const touch = e.touches[0] || e.changedTouches[0];
+      this.updateTouchPosition(touch.clientX - rect.left, touch.clientY - rect.top, rect);
+    };
+
+    const handleTouchMove = (e) => {
+      if (!this.isTouching || (this.state !== 'playing' && this.state !== 'paused')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = this.movementArea.getBoundingClientRect();
+      const touch = e.touches[0] || e.changedTouches[0];
+      this.updateTouchPosition(touch.clientX - rect.left, touch.clientY - rect.top, rect);
+    };
+
+    const handleTouchEnd = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.isTouching = false;
+      this.touchX = 0;
+      this.touchY = 0;
+      if (this.joystick) {
+        this.joystick.style.transform = 'translate(-50%, -50%)';
+      }
+    };
+
+    this.movementArea.addEventListener('touchstart', handleTouchStart, { passive: false });
+    this.movementArea.addEventListener('touchmove', handleTouchMove, { passive: false });
+    this.movementArea.addEventListener('touchend', handleTouchEnd, { passive: false });
+    this.movementArea.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+    // Mouse support for testing on desktop
+    this.movementArea.addEventListener('mousedown', (e) => {
+      if (!isTouchDevice) return; // Only use mouse if it's a touch device
+      e.preventDefault();
+      this.isTouching = true;
+      const rect = this.movementArea.getBoundingClientRect();
+      this.updateTouchPosition(e.clientX - rect.left, e.clientY - rect.top, rect);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!this.isTouching || !isTouchDevice) return;
+      e.preventDefault();
+      const rect = this.movementArea.getBoundingClientRect();
+      this.updateTouchPosition(e.clientX - rect.left, e.clientY - rect.top, rect);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!isTouchDevice) return;
+      this.isTouching = false;
+      this.touchX = 0;
+      this.touchY = 0;
+      this.joystick.style.transform = 'translate(-50%, -50%)';
+    });
+
+    // Shoot button
+    if (this.shootButton) {
+      this.shootButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (this.state === 'playing') {
+          const newBullets = this.player.shoot();
+          this.bullets.push(...newBullets);
+        }
+      }, { passive: false });
+
+      this.shootButton.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        if (this.state === 'playing') {
+          const newBullets = this.player.shoot();
+          this.bullets.push(...newBullets);
+        }
+      });
+
+      // Auto-shoot while holding
+      let shootInterval = null;
+      const startShooting = () => {
+        if (this.state === 'playing') {
+          const shoot = () => {
+            if (this.state === 'playing') {
+              const newBullets = this.player.shoot();
+              this.bullets.push(...newBullets);
+            }
+          };
+          shoot(); // Shoot immediately
+          shootInterval = setInterval(shoot, 100); // Then shoot every 100ms
+        }
+      };
+      const stopShooting = () => {
+        if (shootInterval) {
+          clearInterval(shootInterval);
+          shootInterval = null;
+        }
+      };
+
+      this.shootButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startShooting();
+      }, { passive: false });
+      this.shootButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopShooting();
+      });
+      this.shootButton.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopShooting();
+      });
+      this.shootButton.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startShooting();
+      });
+      this.shootButton.addEventListener('mouseup', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopShooting();
+      });
+      this.shootButton.addEventListener('mouseleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopShooting();
+      });
+    }
+
+    // Prevent scrolling/zooming on canvas during gameplay
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (this.state === 'playing' || this.state === 'paused') {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      if (this.state === 'playing' || this.state === 'paused') {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // Prevent context menu on long press
+    this.canvas.addEventListener('contextmenu', (e) => {
+      if (this.state === 'playing' || this.state === 'paused') {
+        e.preventDefault();
+      }
+    });
+  }
+
+  updateTouchPosition(x, y, rect) {
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    // Calculate distance from center
+    const deltaX = x - centerX;
+    const deltaY = y - centerY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const maxDistance = Math.min(centerX, centerY) - 20; // Leave some margin
+    
+    // Normalize to -1 to 1 range
+    if (distance > maxDistance) {
+      this.touchX = (deltaX / distance) * maxDistance / centerX;
+      this.touchY = (deltaY / distance) * maxDistance / centerY;
+      
+      // Update joystick visual position
+      const joystickX = (deltaX / distance) * maxDistance;
+      const joystickY = (deltaY / distance) * maxDistance;
+      this.joystick.style.transform = `translate(calc(-50% + ${joystickX}px), calc(-50% + ${joystickY}px))`;
+    } else {
+      this.touchX = deltaX / centerX;
+      this.touchY = deltaY / centerY;
+      
+      // Update joystick visual position
+      this.joystick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+    }
   }
 
   exitGame() {
@@ -1362,8 +1568,8 @@ class SpaceGame {
   update() {
     if (this.state !== 'playing') return;
 
-    // Update player
-    this.player.update(this.keys);
+    // Update player with keyboard and touch controls
+    this.player.update(this.keys, this.touchX || 0, this.touchY || 0);
 
     // Spawn enemies (check current count to prevent overcrowding)
     const newEnemy = this.waveManager.spawnEnemy(this.canvas, this.enemies.length);
@@ -1679,10 +1885,22 @@ class SpaceGame {
     }
   }
 
+  updateMobileControlsVisibility() {
+    if (!this.mobileControls) return;
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+      // Show controls only when playing or paused
+      this.mobileControls.style.display = (this.state === 'playing' || this.state === 'paused') ? 'flex' : 'none';
+    }
+  }
+
   draw() {
     // Clear canvas
     this.ctx.fillStyle = 'rgba(10, 10, 10, 0.3)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Update mobile controls visibility
+    this.updateMobileControlsVisibility();
 
     if (this.state === 'nickname') {
       this.drawNicknamePrompt();
