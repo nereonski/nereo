@@ -1021,6 +1021,31 @@ class SpaceGame {
     this.showNicknamePrompt = false;
     this.cursorBlinkTimer = 0;
     
+    // API endpoint for leaderboard (can be configured for cross-device sync)
+    // 
+    // IMPORTANT: By default, scores are saved to localStorage which is device-specific.
+    // Scores saved on one device won't appear on another device.
+    //
+    // To enable cross-device sync, configure one of these options:
+    //
+    // Option 1: JSONBin.io (Free tier available)
+    //   1. Sign up at https://jsonbin.io/
+    //   2. Create a new bin
+    //   3. Set: this.apiEndpoint = 'https://api.jsonbin.io/v3/b'
+    //   4. Set: this.apiKey = 'your-api-key'
+    //   5. Set: this.binId = 'your-bin-id'
+    //
+    // Option 2: Your own backend API
+    //   - Create endpoints: GET /leaderboard and PUT /leaderboard
+    //   - Set: this.apiEndpoint = 'https://your-api.com/leaderboard'
+    //
+    // Option 3: Firebase/Supabase
+    //   - Set up a database and configure accordingly
+    //
+    this.apiEndpoint = null; // Set to your API endpoint if you want cloud sync
+    this.apiKey = null; // Set your API key if needed
+    this.binId = null; // Set your bin/collection ID if needed
+    
     // Leaderboard canvas
     this.leaderboardCanvas = document.getElementById('leaderboard-canvas');
     this.leaderboardCtx = this.leaderboardCanvas ? this.leaderboardCanvas.getContext('2d') : null;
@@ -1031,8 +1056,26 @@ class SpaceGame {
     this.setupMobileControls();
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
-    this.loadLeaderboard();
-    this.drawLeaderboard();
+    // Load leaderboard asynchronously
+    this.loadLeaderboard().then(() => {
+      this.drawLeaderboard();
+    }).catch(() => {
+      // Fallback to local storage if cloud load fails
+      const localLeaderboard = this.loadLeaderboardSync();
+      if (localLeaderboard.length > 0) {
+        this.drawLeaderboard();
+      }
+    });
+  }
+
+  loadLeaderboardSync() {
+    // Synchronous version for initial load fallback
+    try {
+      const stored = localStorage.getItem('spaceGameLeaderboard');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
   }
 
   setupExitButton() {
@@ -1748,38 +1791,168 @@ class SpaceGame {
            rect1.y + rect1.height > rect2.y;
   }
 
-  saveScore() {
+  async saveScore() {
     if (this.score > 0 && this.playerNickname) {
-      const leaderboard = this.loadLeaderboard();
-      leaderboard.push({
+      const leaderboard = await this.loadLeaderboard();
+      const newEntry = {
         nickname: this.playerNickname,
         score: this.score,
         date: new Date().toISOString()
-      });
+      };
+      
+      leaderboard.push(newEntry);
       
       // Sort by score descending and keep top 10
       leaderboard.sort((a, b) => b.score - a.score);
       const top10 = leaderboard.slice(0, 10);
       
-      localStorage.setItem('spaceGameLeaderboard', JSON.stringify(top10));
+      // Save to localStorage (always works)
+      try {
+        localStorage.setItem('spaceGameLeaderboard', JSON.stringify(top10));
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
+      }
       
       // Update high score
       if (this.score > this.highScore) {
         this.highScore = this.score;
-        localStorage.setItem('spaceGameHighScore', this.highScore.toString());
+        try {
+          localStorage.setItem('spaceGameHighScore', this.highScore.toString());
+        } catch (e) {
+          console.error('Failed to save high score to localStorage:', e);
+        }
       }
+      
+      // Try to save to cloud (non-blocking)
+      this.saveToCloud(top10).catch(err => {
+        console.log('Cloud save failed (using local storage only):', err);
+      });
       
       this.drawLeaderboard();
     }
   }
 
-  loadLeaderboard() {
-    try {
-      const stored = localStorage.getItem('spaceGameLeaderboard');
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      return [];
+  async saveToCloud(leaderboard) {
+    // If API is configured, save to cloud
+    if (!this.apiEndpoint || !this.binId) {
+      return; // No cloud storage configured
     }
+
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (this.apiKey) {
+        headers['X-Master-Key'] = this.apiKey;
+        headers['X-Access-Key'] = this.apiKey; // Some services use this
+      }
+
+      const response = await fetch(`${this.apiEndpoint}/${this.binId}`, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify(leaderboard)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      // Silently fail - localStorage is the fallback
+      console.log('Cloud save failed (scores saved locally):', error);
+    }
+  }
+
+  async loadFromCloud() {
+    // If API is configured, try to load from cloud
+    if (!this.apiEndpoint || !this.binId) {
+      return null; // No cloud storage configured
+    }
+
+    try {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (this.apiKey) {
+        headers['X-Master-Key'] = this.apiKey;
+        headers['X-Access-Key'] = this.apiKey; // Some services use this
+      }
+
+      const url = this.apiEndpoint.includes('/latest') 
+        ? `${this.apiEndpoint}/${this.binId}/latest`
+        : `${this.apiEndpoint}/${this.binId}`;
+        
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      // Handle different response formats
+      if (data.record) return data.record;
+      if (Array.isArray(data)) return data;
+      if (data.data) return data.data;
+      return [];
+    } catch (error) {
+      console.log('Cloud load failed:', error);
+      return null;
+    }
+  }
+
+  async loadLeaderboard() {
+    // First try to load from cloud, then fallback to localStorage
+    let leaderboard = null;
+    
+    // Try cloud first (non-blocking)
+    try {
+      leaderboard = await this.loadFromCloud();
+    } catch (e) {
+      console.log('Cloud load failed, using localStorage:', e);
+    }
+    
+    // If cloud load failed or not configured, use localStorage
+    if (!leaderboard || leaderboard.length === 0) {
+      try {
+        const stored = localStorage.getItem('spaceGameLeaderboard');
+        leaderboard = stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.error('Failed to load from localStorage:', e);
+        leaderboard = [];
+      }
+    } else {
+      // Merge cloud data with local data, keeping the best scores
+      try {
+        const localStored = localStorage.getItem('spaceGameLeaderboard');
+        const localLeaderboard = localStored ? JSON.parse(localStored) : [];
+        
+        // Combine and deduplicate, keeping highest scores
+        const combined = [...leaderboard, ...localLeaderboard];
+        const scoreMap = new Map();
+        
+        combined.forEach(entry => {
+          const key = entry.nickname.toLowerCase();
+          if (!scoreMap.has(key) || scoreMap.get(key).score < entry.score) {
+            scoreMap.set(key, entry);
+          }
+        });
+        
+        leaderboard = Array.from(scoreMap.values());
+        leaderboard.sort((a, b) => b.score - a.score);
+        leaderboard = leaderboard.slice(0, 10);
+        
+        // Update localStorage with merged data
+        localStorage.setItem('spaceGameLeaderboard', JSON.stringify(leaderboard));
+      } catch (e) {
+        console.error('Failed to merge leaderboards:', e);
+      }
+    }
+    
+    return leaderboard;
   }
 
   resetHighScores() {
@@ -1804,7 +1977,8 @@ class SpaceGame {
     ctx.fillStyle = 'rgba(10, 10, 10, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    const leaderboard = this.loadLeaderboard();
+    // Use synchronous version for drawing (loadLeaderboard is async)
+    const leaderboard = this.loadLeaderboardSync();
     
     if (leaderboard.length === 0) {
       ctx.save();
@@ -2101,7 +2275,7 @@ class SpaceGame {
     this.ctx.font = '20px Inter';
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2);
     
-    const leaderboard = this.loadLeaderboard();
+    const leaderboard = this.loadLeaderboardSync();
     const isNewHighScore = leaderboard.length > 0 && leaderboard[0].score === this.score && leaderboard[0].nickname === this.playerNickname;
     
     if (isNewHighScore && this.score > 0) {
@@ -2130,7 +2304,7 @@ class SpaceGame {
     this.ctx.fillText('All 50 Stages Completed!', this.canvas.width / 2, this.canvas.height / 2 - 30);
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
     
-    const leaderboard = this.loadLeaderboard();
+    const leaderboard = this.loadLeaderboardSync();
     const isNewHighScore = leaderboard.length > 0 && leaderboard[0].score === this.score && leaderboard[0].nickname === this.playerNickname;
     
     if (isNewHighScore && this.score > 0) {
