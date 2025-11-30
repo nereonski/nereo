@@ -77,6 +77,11 @@
   border-radius: 8px;
   background: #0a0a0a;
   cursor: crosshair;
+  outline: none; /* Remove focus outline */
+}
+
+#space-game-canvas:focus {
+  outline: none;
 }
 
 [data-theme="light"] #space-game-canvas {

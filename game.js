@@ -8,7 +8,7 @@ class Player {
     this.height = 30;
     this.x = canvas.width / 2 - this.width / 2;
     this.y = canvas.height - this.height - 30;
-    this.speed = 3;
+    this.speed = 2;
     this.lives = 3;
     this.shootCooldown = 0;
     this.shootDelay = 15;
@@ -180,13 +180,15 @@ class Bullet {
 
 // Enemy class
 class Enemy {
-  constructor(x, y, type = 'basic') {
+  constructor(x, y, type = 'basic', speedMultiplier = 1) {
     this.x = x;
     this.y = y;
     this.type = type;
     this.width = 30;
     this.height = 30;
-    this.speed = type === 'fast' ? 2 : 1;
+    // Base speeds are slower, then multiplied by stage-based multiplier
+    const baseSpeed = type === 'fast' ? 1 : 0.5;
+    this.speed = baseSpeed * speedMultiplier;
     this.active = true;
     this.shootCooldown = 0;
     this.shootDelay = type === 'shooter' ? 120 : Infinity;
@@ -361,22 +363,23 @@ class WaveManager {
     this.stageCompleted = false; // Reset completion flag for new stage
     
     // Gradually increase enemies per stage, but cap it
-    // Stages 1-5: 3-4 enemies
-    // Stages 6-10: 4-5 enemies
-    // Stages 11-15: 5-6 enemies
-    // Stages 16-20: 6-7 enemies
+    // Stages 1-5: 6-8 enemies (longer stages)
+    // Stages 6-10: 8-10 enemies
+    // Stages 11-15: 10-12 enemies
+    // Stages 16-20: 12-14 enemies
     if (this.currentStage <= 5) {
-      this.enemiesPerStage = 3;
-    } else if (this.currentStage <= 10) {
-      this.enemiesPerStage = 4;
-    } else if (this.currentStage <= 15) {
-      this.enemiesPerStage = 5;
-    } else {
       this.enemiesPerStage = 6;
+    } else if (this.currentStage <= 10) {
+      this.enemiesPerStage = 8;
+    } else if (this.currentStage <= 15) {
+      this.enemiesPerStage = 10;
+    } else {
+      this.enemiesPerStage = 12;
     }
     
-    // Increase spawn delay slightly as stages progress for better pacing
-    this.spawnDelay = Math.max(70, 90 - (this.currentStage - 1) * 2);
+    // Increase spawn delay to make stages last longer
+    // Base delay is higher, and decreases more slowly as stages progress
+    this.spawnDelay = Math.max(80, 120 - (this.currentStage - 1) * 1.5);
   }
 
   shouldSpawn(currentEnemyCount) {
@@ -429,7 +432,14 @@ class WaveManager {
         }
       }
       
-      return new Enemy(x, y, type);
+      // Calculate speed multiplier: increases every 5 stages
+      // Stage 1-5: multiplier 1.0
+      // Stage 6-10: multiplier 1.2
+      // Stage 11-15: multiplier 1.4
+      // Stage 16-20: multiplier 1.6
+      const speedMultiplier = 1.0 + (Math.floor((this.currentStage - 1) / 5) * 0.2);
+      
+      return new Enemy(x, y, type, speedMultiplier);
     }
     return null;
   }
@@ -533,10 +543,16 @@ class SpaceGame {
 
   setupEventListeners() {
     document.addEventListener('keydown', (e) => {
+      // Prevent default behavior for game controls to avoid page scrolling
+      // Only prevent when game is active (playing, paused, or menu states)
+      const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
+      if (gameKeys.includes(e.key) && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
+        e.preventDefault();
+      }
+      
       this.keys[e.key] = true;
       
       if (e.key === ' ' && this.state === 'playing') {
-        e.preventDefault();
         const newBullets = this.player.shoot();
         this.bullets.push(...newBullets);
       }
@@ -557,6 +573,12 @@ class SpaceGame {
     });
 
     document.addEventListener('keyup', (e) => {
+      // Prevent default behavior for game controls
+      const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
+      if (gameKeys.includes(e.key) && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
+        e.preventDefault();
+      }
+      
       this.keys[e.key] = false;
     });
   }
@@ -564,6 +586,8 @@ class SpaceGame {
   start() {
     this.state = 'playing';
     this.waveManager.startStage();
+    // Focus the canvas to ensure keyboard events are captured
+    this.canvas.focus();
     this.gameLoop();
   }
 
@@ -917,6 +941,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('space-game-canvas');
   if (canvas) {
     const game = new SpaceGame(canvas);
+    // Focus canvas when clicked to ensure keyboard events work
+    canvas.addEventListener('click', () => {
+      canvas.focus();
+    });
     game.gameLoop();
   }
 });
