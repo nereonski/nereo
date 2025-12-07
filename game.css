@@ -53,7 +53,7 @@
   justify-content: center;
   align-items: center;
   margin: 2rem 0;
-  background: rgba(10, 10, 10, 0.5);
+  background: #000000;
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1rem;
@@ -75,7 +75,7 @@
   max-width: 100%;
   height: auto;
   border-radius: 8px;
-  background: #0a0a0a;
+  background: #000000;
   cursor: crosshair;
   outline: none; /* Remove focus outline */
 }
@@ -186,7 +186,7 @@
 }
 
 .game-canvas-container:fullscreen {
-  background: #0a0a0a;
+  background: #000000;
   padding: 0;
   border: none;
   border-radius: 0;
@@ -199,7 +199,7 @@
 }
 
 .game-canvas-container:-webkit-full-screen {
-  background: #0a0a0a;
+  background: #000000;
   padding: 0;
   border: none;
   border-radius: 0;
@@ -212,7 +212,7 @@
 }
 
 .game-canvas-container:-moz-full-screen {
-  background: #0a0a0a;
+  background: #000000;
   padding: 0;
   border: none;
   border-radius: 0;
@@ -225,7 +225,7 @@
 }
 
 .game-canvas-container:-ms-fullscreen {
-  background: #0a0a0a;
+  background: #000000;
   padding: 0;
   border: none;
   border-radius: 0;

@@ -83,6 +83,45 @@ class Player {
     }, 2000);
     return this.lives <= 0;
   }
+  
+  // Method to trigger damage visual effects (called from game when damage occurs)
+  triggerDamageVisuals(game) {
+    // Trigger damage flash
+    game.damageFlash = 30; // Flash for 30 frames (~0.5 seconds at 60fps)
+    
+    // Trigger screen shake (more intense for better visibility)
+    game.screenShake.intensity = 15;
+    
+    // Create damage particles at ship center
+    const shipCenterX = this.x + this.width / 2;
+    const shipCenterY = this.y + this.height / 2;
+    
+    // Create red/orange damage particles
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      const speed = Math.random() * 3 + 2;
+      const particle = new DamageParticle(
+        shipCenterX,
+        shipCenterY,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed
+      );
+      game.particles.push(particle);
+    }
+    
+    // Create sparks
+    for (let i = 0; i < 5; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 4 + 2;
+      const spark = new SparkParticle(
+        shipCenterX + (Math.random() - 0.5) * this.width,
+        shipCenterY + (Math.random() - 0.5) * this.height,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed
+      );
+      game.particles.push(spark);
+    }
+  }
 
   getBounds() {
     return {
@@ -98,13 +137,13 @@ class Player {
     
     // Shield effect
     if (this.powerUps.shield || this.invincible) {
-      ctx.strokeStyle = '#00ff64';
+      ctx.strokeStyle = '#87CEEB';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2 + 10, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 0.3;
-      ctx.fillStyle = '#00ff64';
+      ctx.fillStyle = '#87CEEB';
       ctx.fill();
       ctx.globalAlpha = 1;
     }
@@ -574,9 +613,9 @@ class PowerUp {
     ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
     ctx.rotate(this.rotation);
     
-    ctx.fillStyle = '#00ff64';
+    ctx.fillStyle = '#FFA500';
     ctx.shadowBlur = 10;
-    ctx.shadowColor = '#00ff64';
+    ctx.shadowColor = '#FFA500';
     
     // Different shapes for different power-ups
     if (this.type === 'rapidFire') {
@@ -600,7 +639,7 @@ class PowerUp {
       // Shield shape
       ctx.beginPath();
       ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
-      ctx.strokeStyle = '#00ff64';
+      ctx.strokeStyle = '#FFA500';
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.fill();
@@ -933,6 +972,85 @@ class DebrisParticle {
   }
 }
 
+// Damage particle for player damage visualization
+class DamageParticle {
+  constructor(x, y, vx, vy) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.life = 20;
+    this.maxLife = 20;
+    this.size = Math.random() * 3 + 2;
+    this.color = '#ff4444'; // Red damage color
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.95; // Slow down
+    this.vy *= 0.95;
+    this.life--;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const alpha = this.life / this.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  isDead() {
+    return this.life <= 0;
+  }
+}
+
+// Spark particle for damage effect
+class SparkParticle {
+  constructor(x, y, vx, vy) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.life = 15;
+    this.maxLife = 15;
+    this.size = Math.random() * 2 + 1;
+    // Yellow/white spark color
+    this.color = Math.random() < 0.5 ? '#ffff00' : '#ffffff';
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.92;
+    this.vy *= 0.92;
+    this.life--;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const alpha = this.life / this.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  isDead() {
+    return this.life <= 0;
+  }
+}
+
 // Smoke particle for explosions
 class SmokeParticle {
   constructor(x, y) {
@@ -995,6 +1113,38 @@ class SmokeParticle {
   }
 }
 
+// Star class for starfield background
+class Star {
+  constructor(canvas) {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.speed = Math.random() * 0.5 + 0.2;
+    this.brightness = Math.random() * 0.5 + 0.5;
+    this.canvas = canvas;
+  }
+
+  update() {
+    this.y += this.speed;
+    // Reset star to top when it goes off screen
+    if (this.y > this.canvas.height) {
+      this.y = 0;
+      this.x = Math.random() * this.canvas.width;
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 255, 255, ${this.brightness})`;
+    ctx.shadowBlur = this.size * 2;
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 // Main Game class
 class SpaceGame {
   constructor(canvas) {
@@ -1010,6 +1160,13 @@ class SpaceGame {
     this.particles = [];
     this.waveManager = new WaveManager();
     
+    // Initialize starfield
+    this.stars = [];
+    const starCount = 100;
+    for (let i = 0; i < starCount; i++) {
+      this.stars.push(new Star(canvas));
+    }
+    
     this.score = 0;
     this.highScore = parseInt(localStorage.getItem('spaceGameHighScore') || '0');
     this.keys = {};
@@ -1020,6 +1177,8 @@ class SpaceGame {
     this.nicknameInput = '';
     this.showNicknamePrompt = false;
     this.cursorBlinkTimer = 0;
+    this.damageFlash = 0; // Track damage flash effect (0-30 frames)
+    this.screenShake = { x: 0, y: 0, intensity: 0 }; // Screen shake effect
     
     // API endpoint for leaderboard (can be configured for cross-device sync)
     // 
@@ -1308,6 +1467,14 @@ class SpaceGame {
       this.oneUpTimer = 0;
       this.lastShot = false;
       this.keys = {};
+      this.damageFlash = 0;
+      this.screenShake = { x: 0, y: 0, intensity: 0 };
+      // Reset stars
+      this.stars = [];
+      const starCount = 100;
+      for (let i = 0; i < starCount; i++) {
+        this.stars.push(new Star(this.canvas));
+      }
       
       // Return to menu
       this.state = 'menu';
@@ -1494,6 +1661,16 @@ class SpaceGame {
       this.canvas.height = 600;
     }
     
+    // Update stars for new canvas size
+    if (this.stars) {
+      this.stars.forEach(star => {
+        star.canvas = this.canvas;
+        // Redistribute stars if canvas size changed significantly
+        if (star.x > this.canvas.width) star.x = Math.random() * this.canvas.width;
+        if (star.y > this.canvas.height) star.y = Math.random() * this.canvas.height;
+      });
+    }
+    
     if (this.player) {
       this.player.canvas = this.canvas;
       // Ensure player stays within bounds
@@ -1596,12 +1773,20 @@ class SpaceGame {
     this.bullets = [];
     this.enemyBullets = [];
     this.powerUps = [];
-    this.particles = [];
-    this.waveManager = new WaveManager();
-    this.score = 0;
-    this.oneUpTimer = 0;
-    this.lastShot = false;
-    this.keys = {}; // Reset all keys
+      this.particles = [];
+      this.waveManager = new WaveManager();
+      this.score = 0;
+      this.oneUpTimer = 0;
+      this.lastShot = false;
+      this.keys = {}; // Reset all keys
+      this.damageFlash = 0;
+      this.screenShake = { x: 0, y: 0, intensity: 0 };
+      // Reset stars
+      this.stars = [];
+      const starCount = 100;
+      for (let i = 0; i < starCount; i++) {
+        this.stars.push(new Star(this.canvas));
+      }
     
     // Check if nickname is set, if not prompt for it
     if (!this.playerNickname) {
@@ -1620,7 +1805,29 @@ class SpaceGame {
   }
 
   update() {
+    // Always update stars for continuous animation
+    this.stars.forEach(star => star.update());
+    
     if (this.state !== 'playing') return;
+
+    // Update damage flash effect
+    if (this.damageFlash > 0) {
+      this.damageFlash--;
+    }
+    
+    // Update screen shake
+    if (this.screenShake.intensity > 0) {
+      // Generate random shake offset based on intensity
+      this.screenShake.x = (Math.random() - 0.5) * this.screenShake.intensity;
+      this.screenShake.y = (Math.random() - 0.5) * this.screenShake.intensity;
+      // Decay shake intensity gradually
+      this.screenShake.intensity *= 0.88; // Slightly slower decay for more noticeable effect
+      if (this.screenShake.intensity < 0.5) {
+        this.screenShake.intensity = 0;
+        this.screenShake.x = 0;
+        this.screenShake.y = 0;
+      }
+    }
 
     // Update player with keyboard and touch controls
     this.player.update(this.keys, this.touchX || 0, this.touchY || 0);
@@ -1725,7 +1932,12 @@ class SpaceGame {
     this.enemyBullets.forEach((bullet, bi) => {
       if (this.checkCollision(bullet.getBounds(), this.player.getBounds())) {
         bullet.active = false;
+        const wasInvincible = this.player.invincible;
         const isDead = this.player.takeDamage();
+        // Only trigger visuals if damage was actually taken (not blocked by invincibility)
+        if (!wasInvincible) {
+          this.player.triggerDamageVisuals(this);
+        }
         if (isDead) {
           this.state = 'gameover';
           this.saveScore();
@@ -1762,7 +1974,12 @@ class SpaceGame {
           this.particles.push(new SmokeParticle(explosionX, explosionY));
         }
         
+        const wasInvincible = this.player.invincible;
         const isDead = this.player.takeDamage();
+        // Only trigger visuals if damage was actually taken (not blocked by invincibility)
+        if (!wasInvincible) {
+          this.player.triggerDamageVisuals(this);
+        }
         if (isDead) {
           this.state = 'gameover';
           this.saveScore();
@@ -1778,7 +1995,7 @@ class SpaceGame {
         
         // Collection particles
         for (let i = 0; i < 5; i++) {
-          this.particles.push(new Particle(powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2, '#00ff64'));
+          this.particles.push(new Particle(powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2, '#FFA500'));
         }
       }
     });
@@ -2093,46 +2310,79 @@ class SpaceGame {
   }
 
   draw() {
-    // Clear canvas
-    this.ctx.fillStyle = 'rgba(10, 10, 10, 0.3)';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
     // Update mobile controls visibility
     this.updateMobileControlsVisibility();
 
     if (this.state === 'nickname') {
+      // Clear canvas with opaque black background
+      this.ctx.fillStyle = '#000000';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      // Draw stars
+      this.stars.forEach(star => star.draw(this.ctx));
       this.drawNicknamePrompt();
       return;
     }
 
     if (this.state === 'menu') {
+      // Clear canvas with opaque black background
+      this.ctx.fillStyle = '#000000';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      // Draw stars
+      this.stars.forEach(star => star.draw(this.ctx));
       this.drawMenu();
       return;
     }
 
+    // For game states, apply screen shake before clearing
+    this.ctx.save();
+    this.ctx.translate(this.screenShake.x, this.screenShake.y);
+    
+    // Clear canvas with opaque black background
+    this.ctx.fillStyle = '#000000';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Draw stars (with shake transform applied)
+    this.stars.forEach(star => star.draw(this.ctx));
+    
     if (this.state === 'paused') {
       this.drawGame();
+      this.ctx.restore(); // Restore before drawing UI
       this.drawPauseScreen();
       return;
     }
 
     if (this.state === 'gameover') {
       this.drawGame();
+      this.ctx.restore(); // Restore before drawing UI
       this.drawGameOverScreen();
       return;
     }
 
     if (this.state === 'victory') {
       this.drawGame();
+      this.ctx.restore(); // Restore before drawing UI
       this.drawVictoryScreen();
       return;
     }
 
-    // Draw game elements
+    // Draw game elements (shake transform already applied)
     this.drawGame();
+    this.ctx.restore(); // Restore before drawing UI and flash overlay
+    
+    // Draw damage flash overlay (after restoring transform so it covers everything)
+    if (this.damageFlash > 0) {
+      const flashAlpha = (this.damageFlash / 30) * 0.4; // Fade from 0.4 to 0
+      this.ctx.fillStyle = `rgba(255, 0, 0, ${flashAlpha})`;
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    
+    // Draw UI (not affected by shake)
+    this.drawUI();
   }
 
   drawGame() {
+    // Screen shake transform is already applied in draw() method
+    
     // Draw particles
     this.particles.forEach(particle => particle.draw(this.ctx));
 
@@ -2148,9 +2398,6 @@ class SpaceGame {
 
     // Draw player
     this.player.draw(this.ctx);
-
-    // Draw UI
-    this.drawUI();
   }
 
   drawUI() {
@@ -2180,7 +2427,7 @@ class SpaceGame {
     const showCursor = Math.floor(this.cursorBlinkTimer / 30) % 2 === 0;
     
     this.ctx.save();
-    this.ctx.fillStyle = 'rgba(10, 10, 10, 0.9)';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.fillStyle = '#00ff64';
@@ -2245,7 +2492,7 @@ class SpaceGame {
 
   drawPauseScreen() {
     this.ctx.save();
-    this.ctx.fillStyle = 'rgba(10, 10, 10, 0.8)';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.fillStyle = '#00ff64';
@@ -2262,7 +2509,7 @@ class SpaceGame {
 
   drawGameOverScreen() {
     this.ctx.save();
-    this.ctx.fillStyle = 'rgba(10, 10, 10, 0.9)';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.fillStyle = '#00ff64';
@@ -2290,7 +2537,7 @@ class SpaceGame {
 
   drawVictoryScreen() {
     this.ctx.save();
-    this.ctx.fillStyle = 'rgba(10, 10, 10, 0.9)';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.fillStyle = '#00ff64';
