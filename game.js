@@ -1150,7 +1150,7 @@ class SpaceGame {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.state = 'menu'; // menu, nickname, playing, paused, gameover, victory
+    this.state = 'menu'; // menu, playing, paused, gameover, victory
     
     this.player = new Player(canvas);
     this.enemies = [];
@@ -1168,74 +1168,62 @@ class SpaceGame {
     }
     
     this.score = 0;
-    this.highScore = parseInt(localStorage.getItem('spaceGameHighScore') || '0');
     this.keys = {};
     this.lastShot = false;
     this.oneUpTimer = 0;
     this.oneUpSpawnInterval = 10800; // Spawn one-up every ~180 seconds (3 minutes) at 60fps
-    this.playerNickname = '';
-    this.nicknameInput = '';
-    this.showNicknamePrompt = false;
-    this.cursorBlinkTimer = 0;
     this.damageFlash = 0; // Track damage flash effect (0-30 frames)
     this.screenShake = { x: 0, y: 0, intensity: 0 }; // Screen shake effect
     
-    // API endpoint for leaderboard (can be configured for cross-device sync)
-    // 
-    // IMPORTANT: By default, scores are saved to localStorage which is device-specific.
-    // Scores saved on one device won't appear on another device.
-    //
-    // To enable cross-device sync, configure one of these options:
-    //
-    // Option 1: JSONBin.io (Free tier available)
-    //   1. Sign up at https://jsonbin.io/
-    //   2. Create a new bin
-    //   3. Set: this.apiEndpoint = 'https://api.jsonbin.io/v3/b'
-    //   4. Set: this.apiKey = 'your-api-key'
-    //   5. Set: this.binId = 'your-bin-id'
-    //
-    // Option 2: Your own backend API
-    //   - Create endpoints: GET /leaderboard and PUT /leaderboard
-    //   - Set: this.apiEndpoint = 'https://your-api.com/leaderboard'
-    //
-    // Option 3: Firebase/Supabase
-    //   - Set up a database and configure accordingly
-    //
-    this.apiEndpoint = null; // Set to your API endpoint if you want cloud sync
-    this.apiKey = null; // Set your API key if needed
-    this.binId = null; // Set your bin/collection ID if needed
-    
-    // Leaderboard canvas
-    this.leaderboardCanvas = document.getElementById('leaderboard-canvas');
-    this.leaderboardCtx = this.leaderboardCanvas ? this.leaderboardCanvas.getContext('2d') : null;
+    // Start button position and dimensions (for canvas click detection)
+    this.startButton = {
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 50
+    };
     
     this.setupEventListeners();
     this.setupFullscreen();
     this.setupExitButton();
     this.setupMobileControls();
-    this.setupMobileStartButton();
+    this.setupCanvasClick();
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
-    // Load leaderboard asynchronously
-    this.loadLeaderboard().then(() => {
-      this.drawLeaderboard();
-    }).catch(() => {
-      // Fallback to local storage if cloud load fails
-      const localLeaderboard = this.loadLeaderboardSync();
-      if (localLeaderboard.length > 0) {
-        this.drawLeaderboard();
-      }
-    });
   }
 
-  loadLeaderboardSync() {
-    // Synchronous version for initial load fallback
-    try {
-      const stored = localStorage.getItem('spaceGameLeaderboard');
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      return [];
-    }
+  setupCanvasClick() {
+    // Handle clicks on canvas for start button
+    this.canvas.addEventListener('click', (e) => {
+      if (this.state === 'menu') {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Check if click is on start button
+        if (x >= this.startButton.x && x <= this.startButton.x + this.startButton.width &&
+            y >= this.startButton.y && y <= this.startButton.y + this.startButton.height) {
+          this.start();
+        }
+      }
+    });
+
+    // Handle touch events for mobile
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (this.state === 'menu') {
+        const rect = this.canvas.getBoundingClientRect();
+        const touch = e.touches[0] || e.changedTouches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        // Check if touch is on start button
+        if (x >= this.startButton.x && x <= this.startButton.x + this.startButton.width &&
+            y >= this.startButton.y && y <= this.startButton.y + this.startButton.height) {
+          e.preventDefault();
+          this.start();
+        }
+      }
+    }, { passive: false });
   }
 
   setupExitButton() {
@@ -1249,39 +1237,6 @@ class SpaceGame {
     });
   }
 
-  setupMobileStartButton() {
-    this.mobileStartBtn = document.getElementById('mobile-start-btn');
-    if (!this.mobileStartBtn) return;
-
-    // Start game when button is clicked
-    this.mobileStartBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (this.state === 'menu' || this.state === 'nickname') {
-        this.start();
-      }
-    });
-
-    // Also handle touch events
-    this.mobileStartBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (this.state === 'menu' || this.state === 'nickname') {
-        this.start();
-      }
-    }, { passive: false });
-  }
-
-  updateMobileStartButtonVisibility() {
-    if (!this.mobileStartBtn) return;
-    const isMobile = this.isMobileDevice();
-    
-    if (isMobile && (this.state === 'menu' || this.state === 'nickname')) {
-      this.mobileStartBtn.style.display = 'block';
-    } else {
-      this.mobileStartBtn.style.display = 'none';
-    }
-  }
 
   setupMobileControls() {
     // Touch movement tracking
@@ -1746,34 +1701,10 @@ class SpaceGame {
       this.player.y = Math.max(0, Math.min(this.player.y, this.canvas.height - this.player.height));
     }
     
-    // Resize leaderboard canvas
-    if (this.leaderboardCanvas) {
-      const maxWidth = Math.min(800, window.innerWidth - 40);
-      this.leaderboardCanvas.width = maxWidth;
-      this.leaderboardCanvas.height = 300;
-      this.drawLeaderboard();
-    }
   }
 
   setupEventListeners() {
     document.addEventListener('keydown', (e) => {
-      // Handle nickname input
-      if (this.state === 'nickname') {
-        if (e.key === 'Enter' && this.nicknameInput.trim().length > 0) {
-          this.playerNickname = this.nicknameInput.trim().substring(0, 15); // Limit to 15 chars
-          this.nicknameInput = '';
-          this.state = 'menu';
-          return;
-        } else if (e.key === 'Backspace') {
-          this.nicknameInput = this.nicknameInput.slice(0, -1);
-          return;
-        } else if (e.key.length === 1 && /[a-zA-Z0-9_\- ]/.test(e.key)) {
-          if (this.nicknameInput.length < 15) {
-            this.nicknameInput += e.key;
-          }
-          return;
-        }
-      }
       
       // Prevent default behavior for game controls to avoid page scrolling
       // Only prevent when game is active (playing, paused, or menu states)
@@ -1799,7 +1730,7 @@ class SpaceGame {
       
       if (e.key === 'r' || e.key === 'R') {
         // Allow restart from any state except menu (menu uses spacebar to start)
-        if (this.state !== 'menu' && this.state !== 'nickname') {
+        if (this.state !== 'menu') {
           e.preventDefault();
           this.restart();
         }
@@ -1818,14 +1749,6 @@ class SpaceGame {
   }
 
   start() {
-    // Check if nickname is set, if not prompt for it
-    if (!this.playerNickname) {
-      this.state = 'nickname';
-      this.nicknameInput = '';
-      this.updateMobileControlsVisibility();
-      return;
-    }
-    
     this.state = 'playing';
     this.waveManager.startStage();
     // Update mobile controls visibility when game starts
@@ -1855,14 +1778,6 @@ class SpaceGame {
       for (let i = 0; i < starCount; i++) {
         this.stars.push(new Star(this.canvas));
       }
-    
-    // Check if nickname is set, if not prompt for it
-    if (!this.playerNickname) {
-      this.state = 'nickname';
-      this.nicknameInput = '';
-      this.updateMobileControlsVisibility();
-      return;
-    }
     
     this.state = 'playing';
     this.waveManager.startStage();
@@ -2008,7 +1923,6 @@ class SpaceGame {
         }
         if (isDead) {
           this.state = 'gameover';
-          this.saveScore();
         }
       }
     });
@@ -2050,7 +1964,6 @@ class SpaceGame {
         }
         if (isDead) {
           this.state = 'gameover';
-          this.saveScore();
         }
       }
     });
@@ -2076,262 +1989,6 @@ class SpaceGame {
            rect1.y + rect1.height > rect2.y;
   }
 
-  async saveScore() {
-    if (this.score > 0 && this.playerNickname) {
-      const leaderboard = await this.loadLeaderboard();
-      const newEntry = {
-        nickname: this.playerNickname,
-        score: this.score,
-        date: new Date().toISOString()
-      };
-      
-      leaderboard.push(newEntry);
-      
-      // Sort by score descending and keep top 10
-      leaderboard.sort((a, b) => b.score - a.score);
-      const top10 = leaderboard.slice(0, 10);
-      
-      // Save to localStorage (always works)
-      try {
-        localStorage.setItem('spaceGameLeaderboard', JSON.stringify(top10));
-      } catch (e) {
-        console.error('Failed to save to localStorage:', e);
-      }
-      
-      // Update high score
-      if (this.score > this.highScore) {
-        this.highScore = this.score;
-        try {
-          localStorage.setItem('spaceGameHighScore', this.highScore.toString());
-        } catch (e) {
-          console.error('Failed to save high score to localStorage:', e);
-        }
-      }
-      
-      // Try to save to cloud (non-blocking)
-      this.saveToCloud(top10).catch(err => {
-        console.log('Cloud save failed (using local storage only):', err);
-      });
-      
-      this.drawLeaderboard();
-    }
-  }
-
-  async saveToCloud(leaderboard) {
-    // If API is configured, save to cloud
-    if (!this.apiEndpoint || !this.binId) {
-      return; // No cloud storage configured
-    }
-
-    try {
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (this.apiKey) {
-        headers['X-Master-Key'] = this.apiKey;
-        headers['X-Access-Key'] = this.apiKey; // Some services use this
-      }
-
-      const response = await fetch(`${this.apiEndpoint}/${this.binId}`, {
-        method: 'PUT',
-        headers: headers,
-        body: JSON.stringify(leaderboard)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      // Silently fail - localStorage is the fallback
-      console.log('Cloud save failed (scores saved locally):', error);
-    }
-  }
-
-  async loadFromCloud() {
-    // If API is configured, try to load from cloud
-    if (!this.apiEndpoint || !this.binId) {
-      return null; // No cloud storage configured
-    }
-
-    try {
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (this.apiKey) {
-        headers['X-Master-Key'] = this.apiKey;
-        headers['X-Access-Key'] = this.apiKey; // Some services use this
-      }
-
-      const url = this.apiEndpoint.includes('/latest') 
-        ? `${this.apiEndpoint}/${this.binId}/latest`
-        : `${this.apiEndpoint}/${this.binId}`;
-        
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: headers
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      // Handle different response formats
-      if (data.record) return data.record;
-      if (Array.isArray(data)) return data;
-      if (data.data) return data.data;
-      return [];
-    } catch (error) {
-      console.log('Cloud load failed:', error);
-      return null;
-    }
-  }
-
-  async loadLeaderboard() {
-    // First try to load from cloud, then fallback to localStorage
-    let leaderboard = null;
-    
-    // Try cloud first (non-blocking)
-    try {
-      leaderboard = await this.loadFromCloud();
-    } catch (e) {
-      console.log('Cloud load failed, using localStorage:', e);
-    }
-    
-    // If cloud load failed or not configured, use localStorage
-    if (!leaderboard || leaderboard.length === 0) {
-      try {
-        const stored = localStorage.getItem('spaceGameLeaderboard');
-        leaderboard = stored ? JSON.parse(stored) : [];
-      } catch (e) {
-        console.error('Failed to load from localStorage:', e);
-        leaderboard = [];
-      }
-    } else {
-      // Merge cloud data with local data, keeping the best scores
-      try {
-        const localStored = localStorage.getItem('spaceGameLeaderboard');
-        const localLeaderboard = localStored ? JSON.parse(localStored) : [];
-        
-        // Combine and deduplicate, keeping highest scores
-        const combined = [...leaderboard, ...localLeaderboard];
-        const scoreMap = new Map();
-        
-        combined.forEach(entry => {
-          const key = entry.nickname.toLowerCase();
-          if (!scoreMap.has(key) || scoreMap.get(key).score < entry.score) {
-            scoreMap.set(key, entry);
-          }
-        });
-        
-        leaderboard = Array.from(scoreMap.values());
-        leaderboard.sort((a, b) => b.score - a.score);
-        leaderboard = leaderboard.slice(0, 10);
-        
-        // Update localStorage with merged data
-        localStorage.setItem('spaceGameLeaderboard', JSON.stringify(leaderboard));
-      } catch (e) {
-        console.error('Failed to merge leaderboards:', e);
-      }
-    }
-    
-    return leaderboard;
-  }
-
-  resetHighScores() {
-    // Clear leaderboard and high score from localStorage
-    localStorage.removeItem('spaceGameLeaderboard');
-    localStorage.removeItem('spaceGameHighScore');
-    
-    // Reset in-game high score
-    this.highScore = 0;
-    
-    // Redraw leaderboard to show empty state
-    this.drawLeaderboard();
-  }
-
-  drawLeaderboard() {
-    if (!this.leaderboardCtx || !this.leaderboardCanvas) return;
-    
-    const ctx = this.leaderboardCtx;
-    const canvas = this.leaderboardCanvas;
-    
-    // Clear canvas
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.5)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Use synchronous version for drawing (loadLeaderboard is async)
-    const leaderboard = this.loadLeaderboardSync();
-    
-    if (leaderboard.length === 0) {
-      ctx.save();
-      ctx.fillStyle = '#00ff64';
-      ctx.font = '16px JetBrains Mono';
-      ctx.textAlign = 'center';
-      ctx.shadowBlur = 5;
-      ctx.shadowColor = '#00ff64';
-      ctx.fillText('No scores yet. Be the first!', canvas.width / 2, canvas.height / 2);
-      ctx.restore();
-      return;
-    }
-    
-    ctx.save();
-    ctx.fillStyle = '#00ff64';
-    ctx.font = 'bold 18px JetBrains Mono';
-    ctx.textAlign = 'left';
-    ctx.shadowBlur = 5;
-    ctx.shadowColor = '#00ff64';
-    
-    // Draw header
-    const headerY = 30;
-    ctx.fillText('Rank', 20, headerY);
-    ctx.fillText('Nickname', 100, headerY);
-    ctx.fillText('Score', canvas.width - 150, headerY);
-    
-    // Draw separator line
-    ctx.strokeStyle = '#00ff64';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(20, headerY + 10);
-    ctx.lineTo(canvas.width - 20, headerY + 10);
-    ctx.stroke();
-    
-    // Draw entries
-    ctx.font = '14px JetBrains Mono';
-    const startY = headerY + 35;
-    const lineHeight = 25;
-    const maxEntries = Math.min(10, leaderboard.length);
-    
-    for (let i = 0; i < maxEntries; i++) {
-      const entry = leaderboard[i];
-      const y = startY + i * lineHeight;
-      
-      // Highlight top 3
-      if (i < 3) {
-        ctx.fillStyle = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : '#cd7f32';
-        ctx.shadowColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : '#cd7f32';
-      } else {
-        ctx.fillStyle = '#00ff64';
-        ctx.shadowColor = '#00ff64';
-      }
-      
-      // Rank
-      ctx.fillText(`${i + 1}.`, 20, y);
-      
-      // Nickname (truncate if too long)
-      const nickname = entry.nickname.length > 20 ? entry.nickname.substring(0, 17) + '...' : entry.nickname;
-      ctx.fillText(nickname, 100, y);
-      
-      // Score
-      ctx.textAlign = 'right';
-      ctx.fillText(entry.score.toLocaleString(), canvas.width - 20, y);
-      ctx.textAlign = 'left';
-    }
-    
-    ctx.restore();
-  }
 
   applyPowerUp(type) {
     if (type === 'rapidFire') {
@@ -2392,18 +2049,6 @@ class SpaceGame {
   draw() {
     // Update mobile controls visibility
     this.updateMobileControlsVisibility();
-    // Update mobile start button visibility
-    this.updateMobileStartButtonVisibility();
-
-    if (this.state === 'nickname') {
-      // Clear canvas with opaque black background
-      this.ctx.fillStyle = '#000000';
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      // Draw stars
-      this.stars.forEach(star => star.draw(this.ctx));
-      this.drawNicknamePrompt();
-      return;
-    }
 
     if (this.state === 'menu') {
       // Clear canvas with opaque black background
@@ -2492,59 +2137,11 @@ class SpaceGame {
     // Score
     this.ctx.fillText(`Score: ${this.score}`, 10, 25);
     
-    // High score
-    this.ctx.fillText(`High: ${this.highScore}`, 10, 50);
-    
     // Lives
-    this.ctx.fillText(`Lives: ${this.player.lives}`, 10, 75);
+    this.ctx.fillText(`Lives: ${this.player.lives}`, 10, 50);
     
     // Stage progress (unlimited stages)
-    this.ctx.fillText(`Stage: ${this.waveManager.currentStage}`, 10, 100);
-    
-    this.ctx.restore();
-  }
-
-  drawNicknamePrompt() {
-    this.cursorBlinkTimer++;
-    const showCursor = Math.floor(this.cursorBlinkTimer / 30) % 2 === 0;
-    
-    this.ctx.save();
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    this.ctx.fillStyle = '#00ff64';
-    this.ctx.font = 'bold 28px JetBrains Mono';
-    this.ctx.textAlign = 'center';
-    this.ctx.shadowBlur = 10;
-    this.ctx.shadowColor = '#00ff64';
-    
-    this.ctx.fillText('ENTER YOUR NICKNAME', this.canvas.width / 2, this.canvas.height / 2 - 60);
-    
-    this.ctx.font = '20px JetBrains Mono';
-    const displayText = this.nicknameInput || '';
-    const inputX = this.canvas.width / 2;
-    const inputY = this.canvas.height / 2;
-    
-    // Draw input box
-    this.ctx.strokeStyle = '#00ff64';
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(inputX - 200, inputY - 20, 400, 40);
-    
-    // Draw nickname text
-    if (displayText) {
-      this.ctx.fillText(displayText, inputX, inputY + 8);
-    }
-    
-    // Draw blinking cursor
-    if (showCursor) {
-      const textWidth = displayText ? this.ctx.measureText(displayText).width : 0;
-      const cursorX = inputX - textWidth / 2 + textWidth;
-      this.ctx.fillRect(cursorX, inputY - 10, 2, 20);
-    }
-    
-    this.ctx.font = '16px Inter';
-    this.ctx.fillText('Press ENTER to confirm', this.canvas.width / 2, this.canvas.height / 2 + 50);
-    this.ctx.fillText('Max 15 characters', this.canvas.width / 2, this.canvas.height / 2 + 80);
+    this.ctx.fillText(`Stage: ${this.waveManager.currentStage}`, 10, 75);
     
     this.ctx.restore();
   }
@@ -2557,17 +2154,43 @@ class SpaceGame {
     this.ctx.shadowBlur = 10;
     this.ctx.shadowColor = '#00ff64';
     
-    this.ctx.fillText('SPACE GAME', this.canvas.width / 2, this.canvas.height / 2 - 50);
+    this.ctx.fillText('SPACE GAME', this.canvas.width / 2, this.canvas.height / 2 - 80);
     
     this.ctx.font = '18px Inter';
-    this.ctx.fillText('Press SPACEBAR to Start', this.canvas.width / 2, this.canvas.height / 2 + 20);
-    this.ctx.fillText('Arrow Keys / WASD: Move', this.canvas.width / 2, this.canvas.height / 2 + 50);
-    this.ctx.fillText('SPACEBAR: Shoot', this.canvas.width / 2, this.canvas.height / 2 + 80);
-    this.ctx.fillText('P: Pause', this.canvas.width / 2, this.canvas.height / 2 + 110);
+    this.ctx.fillText('Press SPACEBAR to Start', this.canvas.width / 2, this.canvas.height / 2 - 20);
+    this.ctx.fillText('Arrow Keys / WASD: Move', this.canvas.width / 2, this.canvas.height / 2 + 10);
+    this.ctx.fillText('SPACEBAR: Shoot', this.canvas.width / 2, this.canvas.height / 2 + 40);
+    this.ctx.fillText('P: Pause', this.canvas.width / 2, this.canvas.height / 2 + 70);
     
-    if (this.highScore > 0) {
-      this.ctx.fillText(`High Score: ${this.highScore}`, this.canvas.width / 2, this.canvas.height / 2 + 150);
-    }
+    // Draw Start Game button
+    const buttonX = this.canvas.width / 2;
+    const buttonY = this.canvas.height / 2 + 120;
+    const buttonWidth = 200;
+    const buttonHeight = 50;
+    
+    // Store button position for click detection
+    this.startButton.x = buttonX - buttonWidth / 2;
+    this.startButton.y = buttonY - buttonHeight / 2;
+    this.startButton.width = buttonWidth;
+    this.startButton.height = buttonHeight;
+    
+    // Draw button background
+    this.ctx.fillStyle = '#ff0000';
+    this.ctx.shadowBlur = 15;
+    this.ctx.shadowColor = '#ff0000';
+    this.ctx.fillRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight);
+    
+    // Draw button border
+    this.ctx.strokeStyle = '#ffffff';
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight);
+    
+    // Draw button text
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.font = 'bold 20px JetBrains Mono';
+    this.ctx.shadowBlur = 5;
+    this.ctx.shadowColor = '#ffffff';
+    this.ctx.fillText('START GAME', buttonX, buttonY + 7);
     
     this.ctx.restore();
   }
@@ -2633,15 +2256,8 @@ class SpaceGame {
     this.ctx.fillText('All 50 Stages Completed!', this.canvas.width / 2, this.canvas.height / 2 - 30);
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
     
-    const leaderboard = this.loadLeaderboardSync();
-    const isNewHighScore = leaderboard.length > 0 && leaderboard[0].score === this.score && leaderboard[0].nickname === this.playerNickname;
-    
-    if (isNewHighScore && this.score > 0) {
-      this.ctx.fillText('NEW HIGH SCORE!', this.canvas.width / 2, this.canvas.height / 2 + 60);
-    }
-    
     this.ctx.font = '18px Inter';
-    this.ctx.fillText('Press R to Restart', this.canvas.width / 2, this.canvas.height / 2 + 100);
+    this.ctx.fillText('Press R to Restart', this.canvas.width / 2, this.canvas.height / 2 + 60);
     
     this.ctx.restore();
   }
