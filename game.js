@@ -1213,6 +1213,7 @@ class SpaceGame {
     this.setupFullscreen();
     this.setupExitButton();
     this.setupMobileControls();
+    this.setupMobileStartButton();
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
     // Load leaderboard asynchronously
@@ -1248,6 +1249,40 @@ class SpaceGame {
     });
   }
 
+  setupMobileStartButton() {
+    this.mobileStartBtn = document.getElementById('mobile-start-btn');
+    if (!this.mobileStartBtn) return;
+
+    // Start game when button is clicked
+    this.mobileStartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.state === 'menu' || this.state === 'nickname') {
+        this.start();
+      }
+    });
+
+    // Also handle touch events
+    this.mobileStartBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.state === 'menu' || this.state === 'nickname') {
+        this.start();
+      }
+    }, { passive: false });
+  }
+
+  updateMobileStartButtonVisibility() {
+    if (!this.mobileStartBtn) return;
+    const isMobile = this.isMobileDevice();
+    
+    if (isMobile && (this.state === 'menu' || this.state === 'nickname')) {
+      this.mobileStartBtn.style.display = 'block';
+    } else {
+      this.mobileStartBtn.style.display = 'none';
+    }
+  }
+
   setupMobileControls() {
     // Touch movement tracking
     this.touchX = 0;
@@ -1258,8 +1293,9 @@ class SpaceGame {
     this.shootButton = document.getElementById('mobile-shoot-btn');
     this.mobileControls = document.getElementById('mobile-controls');
     
-    // Only show mobile controls on touch devices and when playing
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    // Enhanced mobile device detection
+    const isTouchDevice = this.isMobileDevice();
+    
     if (this.mobileControls) {
       // Always start hidden - visibility will be controlled by updateMobileControlsVisibility()
       this.mobileControls.style.display = 'none';
@@ -1308,29 +1344,31 @@ class SpaceGame {
     this.movementArea.addEventListener('touchend', handleTouchEnd, { passive: false });
     this.movementArea.addEventListener('touchcancel', handleTouchEnd, { passive: false });
 
-    // Mouse support for testing on desktop
-    this.movementArea.addEventListener('mousedown', (e) => {
-      if (!isTouchDevice) return; // Only use mouse if it's a touch device
-      e.preventDefault();
-      this.isTouching = true;
-      const rect = this.movementArea.getBoundingClientRect();
-      this.updateTouchPosition(e.clientX - rect.left, e.clientY - rect.top, rect);
-    });
+    // Mouse support for testing on desktop (only if touch device)
+    if (isTouchDevice) {
+      this.movementArea.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        this.isTouching = true;
+        const rect = this.movementArea.getBoundingClientRect();
+        this.updateTouchPosition(e.clientX - rect.left, e.clientY - rect.top, rect);
+      });
 
-    document.addEventListener('mousemove', (e) => {
-      if (!this.isTouching || !isTouchDevice) return;
-      e.preventDefault();
-      const rect = this.movementArea.getBoundingClientRect();
-      this.updateTouchPosition(e.clientX - rect.left, e.clientY - rect.top, rect);
-    });
+      document.addEventListener('mousemove', (e) => {
+        if (!this.isTouching) return;
+        e.preventDefault();
+        const rect = this.movementArea.getBoundingClientRect();
+        this.updateTouchPosition(e.clientX - rect.left, e.clientY - rect.top, rect);
+      });
 
-    document.addEventListener('mouseup', () => {
-      if (!isTouchDevice) return;
-      this.isTouching = false;
-      this.touchX = 0;
-      this.touchY = 0;
-      this.joystick.style.transform = 'translate(-50%, -50%)';
-    });
+      document.addEventListener('mouseup', () => {
+        this.isTouching = false;
+        this.touchX = 0;
+        this.touchY = 0;
+        if (this.joystick) {
+          this.joystick.style.transform = 'translate(-50%, -50%)';
+        }
+      });
+    }
 
     // Shoot button
     if (this.shootButton) {
@@ -1403,25 +1441,49 @@ class SpaceGame {
       });
     }
 
-    // Prevent scrolling/zooming on canvas during gameplay
-    this.canvas.addEventListener('touchstart', (e) => {
-      if (this.state === 'playing' || this.state === 'paused') {
-        e.preventDefault();
-      }
-    }, { passive: false });
+    // Prevent scrolling/zooming on canvas during gameplay (mobile only)
+    if (isTouchDevice) {
+      this.canvas.addEventListener('touchstart', (e) => {
+        // Don't prevent if touching mobile controls
+        const target = e.target;
+        if (target === this.movementArea || target === this.joystick || target === this.shootButton || 
+            this.movementArea.contains(target) || this.shootButton.contains(target)) {
+          return;
+        }
+        if (this.state === 'playing' || this.state === 'paused') {
+          e.preventDefault();
+        }
+      }, { passive: false });
 
-    this.canvas.addEventListener('touchmove', (e) => {
-      if (this.state === 'playing' || this.state === 'paused') {
-        e.preventDefault();
-      }
-    }, { passive: false });
+      this.canvas.addEventListener('touchmove', (e) => {
+        // Don't prevent if touching mobile controls
+        const target = e.target;
+        if (target === this.movementArea || target === this.joystick || target === this.shootButton || 
+            this.movementArea.contains(target) || this.shootButton.contains(target)) {
+          return;
+        }
+        if (this.state === 'playing' || this.state === 'paused') {
+          e.preventDefault();
+        }
+      }, { passive: false });
 
-    // Prevent context menu on long press
-    this.canvas.addEventListener('contextmenu', (e) => {
-      if (this.state === 'playing' || this.state === 'paused') {
-        e.preventDefault();
-      }
-    });
+      // Prevent context menu on long press
+      this.canvas.addEventListener('contextmenu', (e) => {
+        if (this.state === 'playing' || this.state === 'paused') {
+          e.preventDefault();
+        }
+      });
+
+      // Prevent double-tap zoom on mobile
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          e.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, false);
+    }
   }
 
   updateTouchPosition(x, y, rect) {
@@ -1432,23 +1494,29 @@ class SpaceGame {
     const deltaX = x - centerX;
     const deltaY = y - centerY;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    const maxDistance = Math.min(centerX, centerY) - 20; // Leave some margin
+    const maxDistance = Math.min(centerX, centerY) - 25; // Leave some margin for better feel
     
     // Normalize to -1 to 1 range
     if (distance > maxDistance) {
+      // Clamp to max distance (joystick stays within bounds)
       this.touchX = (deltaX / distance) * maxDistance / centerX;
       this.touchY = (deltaY / distance) * maxDistance / centerY;
       
-      // Update joystick visual position
+      // Update joystick visual position (clamped)
       const joystickX = (deltaX / distance) * maxDistance;
       const joystickY = (deltaY / distance) * maxDistance;
-      this.joystick.style.transform = `translate(calc(-50% + ${joystickX}px), calc(-50% + ${joystickY}px))`;
+      if (this.joystick) {
+        this.joystick.style.transform = `translate(calc(-50% + ${joystickX}px), calc(-50% + ${joystickY}px))`;
+      }
     } else {
+      // Within bounds - free movement
       this.touchX = deltaX / centerX;
       this.touchY = deltaY / centerY;
       
       // Update joystick visual position
-      this.joystick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+      if (this.joystick) {
+        this.joystick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+      }
     }
   }
 
@@ -2287,9 +2355,20 @@ class SpaceGame {
     }
   }
 
+  isMobileDevice() {
+    // Enhanced mobile device detection
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isSmallScreen = window.innerWidth <= 768;
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    
+    // Show mobile controls if it's a touch device AND (small screen OR mobile user agent)
+    return hasTouch && (isSmallScreen || isMobileUA);
+  }
+
   updateMobileControlsVisibility() {
     if (!this.mobileControls) return;
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isTouchDevice = this.isMobileDevice();
     if (isTouchDevice) {
       // Show controls only when playing or paused
       const shouldShow = (this.state === 'playing' || this.state === 'paused');
@@ -2306,12 +2385,15 @@ class SpaceGame {
       }
     } else {
       this.mobileControls.style.display = 'none';
+      this.mobileControls.style.visibility = 'hidden';
     }
   }
 
   draw() {
     // Update mobile controls visibility
     this.updateMobileControlsVisibility();
+    // Update mobile start button visibility
+    this.updateMobileStartButtonVisibility();
 
     if (this.state === 'nickname') {
       // Clear canvas with opaque black background
