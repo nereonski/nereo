@@ -4,6 +4,8 @@ class MatrixRain {
     this.canvas = document.getElementById('matrix-canvas');
     this.ctx = this.canvas.getContext('2d');
     this.drops = [];
+    this.dropSpeeds = []; // Variable speeds per column (like the movie)
+    this.columnBrightness = []; // Some columns brighter than others
     this.characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?';
     this.fontSize = 14;
     this.columns = 0;
@@ -20,20 +22,34 @@ class MatrixRain {
     
     // Handle window resize
     window.addEventListener('resize', () => {
+      const oldColumns = this.columns;
       this.resizeCanvas();
-      this.createDrops();
+      // Recreate drops, speeds, and brightness if column count changed
+      if (oldColumns !== this.columns) {
+        this.createDrops();
+      }
     });
   }
 
   resizeCanvas() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+    // More natural spacing like the original movie
     this.columns = Math.floor(this.canvas.width / this.fontSize);
   }
 
   createDrops() {
     this.drops = [];
+    this.dropSpeeds = [];
+    this.columnBrightness = [];
+    
+    // Create drops with variable speeds and brightness (like the movie)
     for (let i = 0; i < this.columns; i++) {
+      // Variable speed per column (much slower for more dramatic effect)
+      this.dropSpeeds[i] = Math.random() * 0.15 + 0.08; // Speed multiplier (0.08 to 0.23)
+      // Some columns are brighter (like highlighted columns in the movie)
+      this.columnBrightness[i] = Math.random() > 0.85 ? 1.3 : 1.0;
+      // Single drop per column that resets continuously
       this.drops[i] = Math.random() * this.canvas.height;
     }
   }
@@ -43,10 +59,11 @@ class MatrixRain {
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     this.currentTheme = theme;
     
+    // Subtle background fade for trail effect (more like the movie)
     if (theme === 'light') {
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
     } else {
-      this.ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
     }
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -56,24 +73,67 @@ class MatrixRain {
     // Use darker green for light mode
     const baseColor = theme === 'light' ? 'rgba(0, 170, 85' : 'rgba(0, 255, 100';
 
-    // Draw characters
+    // Draw Matrix rain with authentic movie-style effect
     for (let i = 0; i < this.drops.length; i++) {
-      const char = this.characters[Math.floor(Math.random() * this.characters.length)];
       const x = i * this.fontSize;
       const y = this.drops[i];
+      const speed = this.dropSpeeds[i];
+      const brightness = this.columnBrightness[i];
 
-      // Add some opacity variation
-      const opacity = Math.random() * 0.8 + 0.2;
-      this.ctx.fillStyle = `${baseColor}, ${opacity})`;
+      // Shorter trail like the original movie (8-12 characters)
+      const trailLength = Math.floor(Math.random() * 5) + 8;
       
-      this.ctx.fillText(char, x, y);
-
-      // Reset drop to top with some randomness
-      if (y > this.canvas.height && Math.random() > 0.975) {
-        this.drops[i] = 0;
+      for (let j = 0; j < trailLength; j++) {
+        const trailY = y - (j * this.fontSize);
+        
+        // Characters change as they fall (more authentic)
+        const char = this.characters[Math.floor(Math.random() * this.characters.length)];
+        
+        // Authentic Matrix effect: bright white head, quick fade to green
+        let opacity;
+        let charColor;
+        
+        if (j === 0) {
+          // Head character: very bright (almost white) in dark mode, bright green in light mode
+          if (theme === 'light') {
+            charColor = `rgba(0, 255, 150, ${0.9 * brightness})`; // Bright cyan-green
+          } else {
+            charColor = `rgba(255, 255, 255, ${0.95 * brightness})`; // Bright white head
+          }
+          opacity = 1.0;
+        } else if (j === 1) {
+          // Second character: bright green
+          if (theme === 'light') {
+            charColor = `rgba(0, 200, 100, ${0.8 * brightness})`;
+          } else {
+            charColor = `rgba(0, 255, 100, ${0.9 * brightness})`; // Bright green
+          }
+          opacity = 0.9;
+        } else {
+          // Trail: quick fade from bright green to dark green
+          const fadeRatio = Math.max(0, (trailLength - j) / trailLength);
+          opacity = fadeRatio * 0.6; // Quick fade
+          
+          if (theme === 'light') {
+            const greenValue = Math.floor(85 + fadeRatio * 85);
+            charColor = `rgba(0, ${greenValue}, ${Math.floor(greenValue * 0.6)}, ${opacity * brightness})`;
+          } else {
+            const greenValue = Math.floor(100 + fadeRatio * 155);
+            charColor = `rgba(0, ${greenValue}, ${Math.floor(greenValue * 0.4)}, ${opacity * brightness})`;
+          }
+        }
+        
+        this.ctx.fillStyle = charColor;
+        this.ctx.fillText(char, x, trailY);
       }
 
-      this.drops[i] += this.fontSize;
+      // Reset drop when it goes off screen for continuous rain
+      if (y > this.canvas.height + (trailLength * this.fontSize)) {
+        this.drops[i] = -Math.random() * 100; // Start slightly above screen
+      }
+
+      // Move at variable speed (like the movie - different speeds per column)
+      this.drops[i] += this.fontSize * speed;
     }
   }
 
@@ -177,11 +237,25 @@ class SmoothScrolling {
   init() {
     this.navLinks.forEach(link => {
       link.addEventListener('click', (e) => {
-        e.preventDefault();
         const targetId = link.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
         
+        // Handle scroll to top (empty hash or just #)
+        if (targetId === '#' || targetId === '') {
+          e.preventDefault();
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+          // Remove active class from all nav links when scrolling to top
+          document.querySelectorAll('.nav-link').forEach(navLink => {
+            navLink.classList.remove('active');
+          });
+          return;
+        }
+        
+        const targetElement = document.querySelector(targetId);
         if (targetElement) {
+          e.preventDefault();
           const offsetTop = targetElement.offsetTop - 80; // Account for fixed navbar
           window.scrollTo({
             top: offsetTop,
@@ -287,18 +361,27 @@ class NavbarScrollEffect {
   constructor() {
     this.navbar = document.querySelector('.navbar');
     this.lastScrollY = window.scrollY;
+    this.sections = document.querySelectorAll('section[id]');
+    this.navLinks = document.querySelectorAll('.nav-link[href^="#"]');
     this.init();
   }
 
   init() {
-    window.addEventListener('scroll', () => this.handleScroll());
+    window.addEventListener('scroll', throttle(() => this.handleScroll(), 10));
+    this.updateActiveLink();
+    // Listen for theme changes
+    document.addEventListener('themechange', () => this.updateNavbarColors());
+    // Initial color update
+    this.updateNavbarColors();
   }
 
-  handleScroll() {
+  updateNavbarColors() {
     const currentScrollY = window.scrollY;
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     
-    if (currentScrollY > 100) {
+    // Add shadow and stronger background when scrolled
+    if (currentScrollY > 50) {
+      this.navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.3)';
       if (theme === 'light') {
         this.navbar.style.background = 'rgba(255, 255, 255, 0.98)';
       } else {
@@ -306,6 +389,7 @@ class NavbarScrollEffect {
       }
       this.navbar.style.backdropFilter = 'blur(15px)';
     } else {
+      this.navbar.style.boxShadow = 'none';
       if (theme === 'light') {
         this.navbar.style.background = 'rgba(255, 255, 255, 0.95)';
       } else {
@@ -313,15 +397,51 @@ class NavbarScrollEffect {
       }
       this.navbar.style.backdropFilter = 'blur(10px)';
     }
+  }
 
-    // Hide/show navbar on scroll
-    if (currentScrollY > this.lastScrollY && currentScrollY > 200) {
-      this.navbar.style.transform = 'translateY(-100%)';
-    } else {
-      this.navbar.style.transform = 'translateY(0)';
-    }
+  handleScroll() {
+    const currentScrollY = window.scrollY;
+    
+    // Update navbar colors based on scroll position and theme
+    this.updateNavbarColors();
 
+    // Keep navbar always visible (sticky)
+    this.navbar.style.transform = 'translateY(0)';
+    
+    // Update active link based on scroll position
+    this.updateActiveLink();
+    
     this.lastScrollY = currentScrollY;
+  }
+
+  updateActiveLink() {
+    const scrollPosition = window.scrollY + 100; // Offset for navbar height
+    
+    this.sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.offsetHeight;
+      const sectionId = section.getAttribute('id');
+      
+      if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+        // Remove active class from all links
+        this.navLinks.forEach(link => {
+          link.classList.remove('active');
+        });
+        
+        // Add active class to current section's link
+        const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+        if (activeLink) {
+          activeLink.classList.add('active');
+        }
+      }
+    });
+    
+    // Handle hero section (top of page)
+    if (window.scrollY < 100) {
+      this.navLinks.forEach(link => {
+        link.classList.remove('active');
+      });
+    }
   }
 }
 
@@ -358,6 +478,12 @@ class ThemeManager {
     }
     
     this.currentTheme = theme;
+    
+    // Dispatch custom event to notify other components of theme change
+    const themeChangeEvent = new CustomEvent('themechange', { 
+      detail: { theme: theme } 
+    });
+    document.dispatchEvent(themeChangeEvent);
   }
 
   toggleTheme() {

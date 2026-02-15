@@ -114,6 +114,7 @@ p {
   border-bottom: 1px solid var(--border-color);
   z-index: 1000;
   transition: all 0.3s ease;
+  box-shadow: none;
 }
 
 .nav-container {
@@ -163,6 +164,8 @@ p {
   text-decoration: none;
   transition: all 0.3s ease;
   letter-spacing: 0.05em;
+  cursor: pointer;
+  display: inline-block;
 }
 
 .nav-logo .logo-text:hover {
@@ -206,6 +209,14 @@ p {
 }
 
 .nav-link:hover::after {
+  width: 100%;
+}
+
+.nav-link.active {
+  color: var(--accent-primary);
+}
+
+.nav-link.active::after {
   width: 100%;
 }
 
