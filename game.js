@@ -1193,37 +1193,51 @@ class SpaceGame {
   }
 
   setupCanvasClick() {
-    // Handle clicks on canvas for start button
-    this.canvas.addEventListener('click', (e) => {
+    // Handle clicks and touches on canvas for start button
+    const handleStartButton = (e) => {
       if (this.state === 'menu') {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
         
-        // Check if click is on start button
-        if (x >= this.startButton.x && x <= this.startButton.x + this.startButton.width &&
-            y >= this.startButton.y && y <= this.startButton.y + this.startButton.height) {
-          this.start();
+        let x, y;
+        
+        // Get coordinates from click or touch event
+        if (e.type === 'touchstart' || e.type === 'touchend') {
+          const touch = e.touches && e.touches.length > 0 ? e.touches[0] : 
+                       e.changedTouches && e.changedTouches.length > 0 ? e.changedTouches[0] : null;
+          if (!touch) return false;
+          // Convert screen coordinates to canvas coordinates
+          x = (touch.clientX - rect.left) * scaleX;
+          y = (touch.clientY - rect.top) * scaleY;
+        } else {
+          // Convert screen coordinates to canvas coordinates
+          x = (e.clientX - rect.left) * scaleX;
+          y = (e.clientY - rect.top) * scaleY;
+        }
+        
+        // Check if click/touch is on start button
+        // Button coordinates are set in drawMenu() in canvas coordinates
+        if (this.startButton.width > 0 && this.startButton.height > 0) {
+          if (x >= this.startButton.x && x <= this.startButton.x + this.startButton.width &&
+              y >= this.startButton.y && y <= this.startButton.y + this.startButton.height) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            this.start();
+            return true;
+          }
         }
       }
-    });
+      return false;
+    };
 
-    // Handle touch events for mobile
-    this.canvas.addEventListener('touchstart', (e) => {
-      if (this.state === 'menu') {
-        const rect = this.canvas.getBoundingClientRect();
-        const touch = e.touches[0] || e.changedTouches[0];
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        
-        // Check if touch is on start button
-        if (x >= this.startButton.x && x <= this.startButton.x + this.startButton.width &&
-            y >= this.startButton.y && y <= this.startButton.y + this.startButton.height) {
-          e.preventDefault();
-          this.start();
-        }
-      }
-    }, { passive: false });
+    // Add click handler
+    this.canvas.addEventListener('click', handleStartButton, { capture: true });
+
+    // Add touch handlers (use capture phase to run before other handlers)
+    this.canvas.addEventListener('touchstart', handleStartButton, { passive: false, capture: true });
+    this.canvas.addEventListener('touchend', handleStartButton, { passive: false, capture: true });
   }
 
   setupExitButton() {
@@ -1403,6 +1417,10 @@ class SpaceGame {
         const target = e.target;
         if (target === this.movementArea || target === this.joystick || target === this.shootButton || 
             this.movementArea.contains(target) || this.shootButton.contains(target)) {
+          return;
+        }
+        // Don't prevent if on menu screen (start button needs to work)
+        if (this.state === 'menu') {
           return;
         }
         if (this.state === 'playing' || this.state === 'paused') {
