@@ -2,6 +2,14 @@
 class MatrixRain {
   constructor() {
     this.canvas = document.getElementById('matrix-canvas');
+    if (!this.canvas) {
+      this.ctx = null;
+      this.drops = [];
+      this.dropSpeeds = [];
+      this.columnBrightness = [];
+      this.animationId = null;
+      return;
+    }
     this.ctx = this.canvas.getContext('2d');
     this.drops = [];
     this.dropSpeeds = []; // Variable speeds per column (like the movie)
@@ -16,6 +24,7 @@ class MatrixRain {
   }
 
   init() {
+    if (!this.canvas || !this.ctx) return;
     this.resizeCanvas();
     this.createDrops();
     this.animate();
@@ -32,6 +41,7 @@ class MatrixRain {
   }
 
   resizeCanvas() {
+    if (!this.canvas) return;
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     // More natural spacing like the original movie
@@ -39,6 +49,7 @@ class MatrixRain {
   }
 
   createDrops() {
+    if (!this.canvas || !this.ctx) return;
     this.drops = [];
     this.dropSpeeds = [];
     this.columnBrightness = [];
@@ -55,6 +66,7 @@ class MatrixRain {
   }
 
   draw() {
+    if (!this.canvas || !this.ctx) return;
     // Semi-transparent background for trail effect (theme-dependent)
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     this.currentTheme = theme;
@@ -138,6 +150,7 @@ class MatrixRain {
   }
 
   animate() {
+    if (!this.canvas || !this.ctx) return;
     this.draw();
     this.animationId = requestAnimationFrame(() => this.animate());
   }
@@ -256,7 +269,7 @@ class SmoothScrolling {
         const targetElement = document.querySelector(targetId);
         if (targetElement) {
           e.preventDefault();
-          const offsetTop = targetElement.offsetTop - 80; // Account for fixed navbar
+          const offsetTop = targetElement.offsetTop - 72; // Account for fixed navbar
           window.scrollTo({
             top: offsetTop,
             behavior: 'smooth'
@@ -381,21 +394,21 @@ class NavbarScrollEffect {
     
     // Add shadow and stronger background when scrolled
     if (currentScrollY > 50) {
-      this.navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.3)';
+      this.navbar.style.boxShadow = '0 1px 12px rgba(0, 0, 0, 0.12)';
       if (theme === 'light') {
-        this.navbar.style.background = 'rgba(255, 255, 255, 0.98)';
+        this.navbar.style.background = 'rgba(240, 235, 228, 0.96)';
       } else {
-        this.navbar.style.background = 'rgba(10, 10, 10, 0.98)';
+        this.navbar.style.background = 'rgba(28, 33, 41, 0.96)';
       }
-      this.navbar.style.backdropFilter = 'blur(15px)';
+      this.navbar.style.backdropFilter = 'blur(14px)';
     } else {
       this.navbar.style.boxShadow = 'none';
       if (theme === 'light') {
-        this.navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+        this.navbar.style.background = 'rgba(240, 235, 228, 0.9)';
       } else {
-        this.navbar.style.background = 'rgba(10, 10, 10, 0.95)';
+        this.navbar.style.background = 'rgba(28, 33, 41, 0.88)';
       }
-      this.navbar.style.backdropFilter = 'blur(10px)';
+      this.navbar.style.backdropFilter = 'blur(14px)';
     }
   }
 
@@ -461,7 +474,9 @@ class ThemeManager {
     this.setTheme(this.currentTheme);
     
     // Add event listener
-    this.themeToggle.addEventListener('click', () => this.toggleTheme());
+    if (this.themeToggle) {
+      this.themeToggle.addEventListener('click', () => this.toggleTheme());
+    }
   }
 
   setTheme(theme) {
@@ -469,12 +484,14 @@ class ThemeManager {
     localStorage.setItem('theme', theme);
     
     // Update icons
-    if (theme === 'light') {
-      this.moonIcon.style.display = 'none';
-      this.sunIcon.style.display = 'block';
-    } else {
-      this.moonIcon.style.display = 'block';
-      this.sunIcon.style.display = 'none';
+    if (this.moonIcon && this.sunIcon) {
+      if (theme === 'light') {
+        this.moonIcon.style.display = 'none';
+        this.sunIcon.style.display = 'block';
+      } else {
+        this.moonIcon.style.display = 'block';
+        this.sunIcon.style.display = 'none';
+      }
     }
     
     this.currentTheme = theme;
@@ -502,24 +519,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeManager = new ThemeManager();
   
   // Initialize all components
-  const matrixRain = new MatrixRain();
+  new MatrixRain();
   const scrollAnimations = new ScrollAnimations();
   const mobileNav = new MobileNavigation();
   const smoothScrolling = new SmoothScrolling();
-  const particleEffects = new ParticleEffects();
+  const isWorkshopHome = document.body.classList.contains('page-workshop');
+  if (!isWorkshopHome) {
+    new ParticleEffects();
+  }
   const navbarEffect = new NavbarScrollEffect();
 
   // Add some interactive hover effects
   const projectCards = document.querySelectorAll('.project-card');
-  projectCards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-10px) scale(1.02)';
+  if (!isWorkshopHome) {
+    projectCards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-10px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0) scale(1)';
+      });
     });
-    
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'translateY(0) scale(1)';
-    });
-  });
+  }
 
   // Add click effects to buttons
   const buttons = document.querySelectorAll('.btn');
@@ -596,6 +618,7 @@ function throttle(func, limit) {
 // Pause animations when tab is not visible
 document.addEventListener('visibilitychange', () => {
   const matrixCanvas = document.getElementById('matrix-canvas');
+  if (!matrixCanvas) return;
   if (document.hidden) {
     matrixCanvas.style.animationPlayState = 'paused';
   } else {

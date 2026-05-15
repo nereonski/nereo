@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nereo – Still Loading</title>
+  <title>Nereo</title>
   <link rel="icon" type="image/png" href="assets/images/Skulli.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-  <!-- Matrix background animation -->
-  <canvas id="matrix-canvas"></canvas>
+<body class="page-workshop">
+  <!-- Homepage uses a static workshop background (see style.css); no matrix canvas -->
   
   <!-- Navigation -->
   <nav class="navbar">
@@ -65,18 +64,13 @@
   <section class="hero">
     <div class="hero-content">
       <h1 class="hero-title">
-        <span class="greeting">Hello, I'm</span>
         <span class="name">Nereo</span>
-        <span class="title-highlight">Tech Enthusiast & Learner</span>
       </h1>
-      <p class="hero-description">
-        Freight forwarding specialist by day, student by night, and family man always.
-        I dive into coding whenever the <span class="matrix-glow">Matrix</span> glitches long enough to grant me a few free moments - usually somewhere between work deadlines, university assignments, family quality time, and the daily adventures of a middle-class man trying to keep bills paid, coffee hot, and sanity intact.
-        Exploring the endless possibilities of technology, one "vibe coding" session at a time.
-      </p>
+      <p class="hero-lede">Experiments, notes and digital side projects.</p>
+      <p class="hero-meta">Frankfurt</p>
       <div class="hero-buttons">
-        <a href="#projects" class="btn btn-primary">View Progress</a>
-        <a href="#contact" class="btn btn-secondary">Get In Touch</a>
+        <a href="#projects" class="btn btn-primary">Sandbox</a>
+        <a href="#contact" class="btn btn-secondary">Contact</a>
       </div>
     </div>
   </section>
@@ -90,7 +84,7 @@
         <div class="about-content">
           <div class="about-text">
             <p class="about-description">
-              Hi, I'm <strong>Nereo</strong> - half German, half Mexican, based in <strong>Frankfurt am Main</strong>, husband, dad, and someone who somehow found himself diving headfirst into the Matrix of web development and AI (yes, I know… "Nereo" and "Neo" - destiny had jokes).
+              Hi, I'm <strong>Nereo</strong> - half German, half Mexican, based in <strong>Frankfurt am Main</strong>, husband, dad, and someone who somehow found himself diving headfirst into the world of web development and AI (yes, I still smile at the <span class="matrix-whisper">Nereo / Neo</span> rhyme).
             </p>
             
             <p class="about-description">
@@ -109,7 +103,7 @@
             <h3 class="section-subtitle">Why this website exists</h3>
             
             <p class="about-description">
-              This site isn't a business - <strong>for now</strong>. It's a sandbox for learning, testing, and documenting progress. I want to be honest about where this might lead: once I've built real skills and experience, I'd like to use them to eventually step outside the 9-to-5 "Matrix." Until then, this space remains a personal, non-commercial project focused on curiosity and practice. I have to be careful what I write here. The tax office in Germany is like Agent Smith...
+              This site isn't a business - <strong>for now</strong>. It's a sandbox for learning, testing, and documenting progress. I want to be honest about where this might lead: once I've built real skills and experience, I'd like to use them to eventually step outside a fixed nine-to-five routine. Until then, this space remains a personal, non-commercial project focused on curiosity and practice. I have to be careful what I write here: German tax rules reward precise wording.
             </p>
             
             <h3 class="section-subtitle">What I'm hoping for</h3>
@@ -316,7 +310,7 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2025 Nereo. Built with passion and... yes, I know... AI.</p>
+      <p>&copy; 2026 Nereo. Built with patience, curiosity, and a little help from AI.</p>
       <div class="footer-signature">
         <a href="#" class="skull-link" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
           <img src="assets/images/Skulli.png" alt="Skull signature" class="skull-icon" />
