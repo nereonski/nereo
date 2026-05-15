@@ -11,10 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-  <!-- Matrix background animation -->
-  <canvas id="matrix-canvas"></canvas>
-  
+<body class="page-workshop page-space-game">
+  <!-- Same quiet workshop background as index.html (see style.css); game canvas is the playful layer -->
+
   <!-- Navigation -->
   <nav class="navbar">
     <div class="nav-container">
@@ -41,13 +40,10 @@
             <a href="index.html#about" class="nav-link">About</a>
           </li>
           <li class="nav-item">
-            <a href="index.html#projects" class="nav-link">Progress</a>
+            <a href="index.html#projects" class="nav-link">Sandbox</a>
           </li>
           <li class="nav-item">
-            <a href="blog.html" class="nav-link">Blog</a>
-          </li>
-          <li class="nav-item">
-            <a href="space-game.html" class="nav-link">Space Game</a>
+            <a href="space-game.html" class="nav-link active" aria-current="page">Space Game</a>
           </li>
           <li class="nav-item">
             <a href="index.html#contact" class="nav-link">Contact</a>
@@ -68,11 +64,13 @@
     <section id="space-game" class="section">
       <div class="container">
         <div class="game-container">
-          <h2 class="game-section-title">Space Game</h2>
-          <p class="game-description">
-            A classic space shooter built with vanilla JavaScript and HTML5 Canvas. 
-            Defend against waves of enemies, collect power-ups, and see how long you can survive!
-          </p>
+          <header class="game-page-header">
+            <h1 class="section-title game-page-title">Space Game</h1>
+            <p class="game-page-meta">Canvas · vanilla JS · mobile-friendly controls</p>
+            <p class="game-description">
+              A small browser shooter: waves, power-ups, and a high score to chase. Built as a sandbox exercise — the starfield stays in the canvas; the page stays in the same quiet workshop as the rest of the site.
+            </p>
+          </header>
           <div class="game-canvas-container">
             <canvas id="space-game-canvas" width="800" height="600" tabindex="0"></canvas>
             <!-- Mobile Controls -->
@@ -139,7 +137,7 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2025 Nereo. Built with passion and... yes, I know... AI.</p>
+      <p>&copy; 2026 Nereo. Built with patience, curiosity, and a little help from AI.</p>
       <div class="footer-signature">
         <a href="#" class="skull-link" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
           <img src="assets/images/Skulli.png" alt="Skull signature" class="skull-icon" />

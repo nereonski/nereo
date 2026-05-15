@@ -269,7 +269,7 @@ class SmoothScrolling {
         const targetElement = document.querySelector(targetId);
         if (targetElement) {
           e.preventDefault();
-          const offsetTop = targetElement.offsetTop - 72; // Account for fixed navbar
+          const offsetTop = targetElement.offsetTop - 68; // Account for fixed navbar
           window.scrollTo({
             top: offsetTop,
             behavior: 'smooth'
@@ -394,21 +394,21 @@ class NavbarScrollEffect {
     
     // Add shadow and stronger background when scrolled
     if (currentScrollY > 50) {
-      this.navbar.style.boxShadow = '0 1px 12px rgba(0, 0, 0, 0.12)';
+      this.navbar.style.boxShadow = '0 1px 8px rgba(0, 0, 0, 0.08)';
       if (theme === 'light') {
-        this.navbar.style.background = 'rgba(240, 235, 228, 0.96)';
+        this.navbar.style.background = 'rgba(240, 235, 228, 0.94)';
       } else {
-        this.navbar.style.background = 'rgba(28, 33, 41, 0.96)';
+        this.navbar.style.background = 'rgba(28, 33, 41, 0.94)';
       }
-      this.navbar.style.backdropFilter = 'blur(14px)';
+      this.navbar.style.backdropFilter = 'blur(16px)';
     } else {
       this.navbar.style.boxShadow = 'none';
       if (theme === 'light') {
-        this.navbar.style.background = 'rgba(240, 235, 228, 0.9)';
+        this.navbar.style.background = 'rgba(240, 235, 228, 0.85)';
       } else {
-        this.navbar.style.background = 'rgba(28, 33, 41, 0.88)';
+        this.navbar.style.background = 'rgba(28, 33, 41, 0.82)';
       }
-      this.navbar.style.backdropFilter = 'blur(14px)';
+      this.navbar.style.backdropFilter = 'blur(16px)';
     }
   }
 
