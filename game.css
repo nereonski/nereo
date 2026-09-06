@@ -447,3 +447,19 @@
     bottom: 15px;
   }
 }
+
+/* Portfolio shell and accessible controls. */
+.game-container{max-width:1000px;text-align:left}
+.game-page-meta{margin-top:18px;font-family:var(--mono)}
+.game-description{text-align:left;margin-left:0}
+.game-canvas-container{border-radius:0;padding:0;background:#000;box-shadow:none;max-width:800px;margin-inline:auto}
+#space-game-canvas{border-radius:0;width:100%;max-height:none}
+#space-game-canvas:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+.game-controls{border-radius:0;border-width:1px 0 0;padding-inline:0;background:none;gap:18px;flex-direction:row}
+.game-control-key{font-family:var(--mono);border-radius:2px}
+.fullscreen-btn,.exit-btn{border-radius:0;min-width:44px;height:44px}
+.game-status{font-style:normal;text-align:center;font-size:12px;line-height:1.6}
+.game-actions{display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap}
+.game-actions button{background:var(--ink);color:var(--paper);border:1px solid var(--ink);padding:14px 22px;font-size:12px;min-height:44px}
+.game-actions button+button{background:none;color:var(--ink)}
+.mobile-controls{z-index:2}

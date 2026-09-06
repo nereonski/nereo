@@ -1,268 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nereo</title>
-  <link rel="icon" type="image/png" href="assets/images/Skulli.png" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Nereo’s independent corner of the internet. Web experiments, AI explorations, and digital side projects from Frankfurt am Main.">
+  <meta name="theme-color" content="#eeece5">
+  <title>Nereo — A work in progress.</title>
+  <link rel="icon" href="assets/images/Skulli.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
-<body class="page-workshop">
-  <!-- Homepage uses a static workshop background (see style.css); no matrix canvas -->
-  
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <div class="nav-left">
-        <div class="nav-logo">
-          <a href="#" class="logo-text" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">&lt;nereo/&gt;</a>
-        </div>
-      </div>
-      <div class="nav-center">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <!-- Moon Icon for Dark Mode -->
-          <svg class="theme-icon moon-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12.34 2.02C6.59 1.82 2 6.42 2 12c0 5.52 4.48 10 10 10 3.71 0 6.93-2.02 8.66-5.02-7.51-.25-13.12-6.01-13.12-13.5 0-.78.07-1.53.2-2.25C10.54 2.94 11.4 2.42 12.34 2.02z"/>
-          </svg>
-          <!-- Sun Icon for Light Mode -->
-          <svg class="theme-icon sun-icon" style="display: none;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06z"/>
-          </svg>
-        </button>
-      </div>
-      <div class="nav-right">
-        <ul class="nav-menu">
-          <li class="nav-item">
-            <a href="#about" class="nav-link">About</a>
-          </li>
-          <li class="nav-item">
-            <a href="#projects" class="nav-link">Sandbox</a>
-          </li>
-          <li class="nav-item">
-            <a href="space-game.html" class="nav-link">Space Game</a>
-          </li>
-          <li class="nav-item">
-            <a href="#contact" class="nav-link">Contact</a>
-          </li>
-        </ul>
-        <div class="hamburger">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1 class="hero-title">
-        <span class="name">Nereo</span>
-      </h1>
-      <p class="hero-lede">Experiments, notes and digital side projects.</p>
-      <p class="hero-meta">Frankfurt</p>
-      <div class="hero-buttons">
-        <a href="#projects" class="btn btn-primary">Sandbox</a>
-        <a href="#contact" class="btn btn-secondary">Contact</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Main Content -->
-  <main>
-    <!-- About Section -->
-    <section id="about" class="section">
-      <div class="container">
-        <h2 class="section-title">About</h2>
-        <div class="about-content">
-          <div class="about-text">
-            <p class="about-description">
-              Based in <strong>Frankfurt am Main</strong>, working in international air cargo logistics and exploring digital systems, web development, and AI workflows after hours.
-            </p>
-            <p class="about-description">
-              This site is my personal sandbox for experiments, notes and small side projects.
-            </p>
-            <div class="skills">
-              <h3>Skills & Interests</h3>
-              
-              <h4 class="section-subtitle-small">Technical Skills</h4>
-              <div class="skill-tags">
-                <span class="skill-tag">Logistics</span>
-                <span class="skill-tag">Web Development</span>
-                <span class="skill-tag">UI / UX Design</span>
-                <span class="skill-tag">SEO Basics</span>
-                <span class="skill-tag">AI</span>
-              </div>
-              
-              <h4 class="section-subtitle-small">Languages</h4>
-              <div class="skill-tags">
-                <span class="skill-tag">German</span>
-                <span class="skill-tag">English</span>
-                <span class="skill-tag">Spanish</span>
-                <span class="skill-tag">Portuguese</span>
-              </div>
-              
-              <h4 class="section-subtitle-small">Interests</h4>
-              <div class="skill-tags">
-                <span class="skill-tag">Technology & Innovation</span>
-                <span class="skill-tag">History</span>
-                <span class="skill-tag">Communication</span>
-                <span class="skill-tag">Gaming</span>
-                <span class="skill-tag">Music</span>
-                <span class="skill-tag">Tacos</span>
-              </div>
-            </div>
-          </div>
-        </div>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="wordmark" href="index.html" aria-label="Nereo home">nereo<span aria-hidden="true">✳</span></a>
+    <span class="header-note mono">An independent digital space</span>
+    <nav aria-label="Main navigation"><a href="#projects">Sandbox <span>01</span></a><a href="#about">About <span>02</span></a><a href="#contact">Contact <span>↗</span></a></nav>
+    <button class="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false"><span aria-hidden="true">◐</span></button>
+  </header>
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-top mono"><span><i class="status-dot"></i> Curious by default. Learning in public.</span><span>Frankfurt, DE <time id="local-time"></time></span></div>
+      <h1 id="hero-title">A work in<br><span class="serif">progress.</span><span class="asterisk" aria-hidden="true">✳</span></h1>
+      <div class="hero-bottom"><p>I’m Nereo. I move things around the world.<br>And build things for the web.</p><p class="hero-description">A personal sandbox for code, AI, and the ideas that won’t leave me alone.</p><a class="round-link" href="#projects" aria-label="Explore the sandbox">↓</a></div>
+      <figure class="orbital" aria-label="Interactive orbital study">
+        <div class="figure-top mono"><span>FIG. 001 — CURIOSITY IN ORBIT</span><span>48° → ∞</span></div>
+        <svg id="orbit-art" viewBox="0 0 1000 400" role="img" aria-labelledby="orbit-title"><title id="orbit-title">An intricate orange orbital form, drawn from intersecting ellipses</title><g class="orbit-grid" fill="none" stroke="currentColor"><path d="M0 100H1000M0 200H1000M0 300H1000M100 0V400M300 0V400M500 0V400M700 0V400M900 0V400"/></g><g id="orbit-lines" transform="translate(500 200)" fill="none" stroke="currentColor"><ellipse rx="290" ry="115"/><ellipse rx="290" ry="115" transform="rotate(30)"/><ellipse rx="290" ry="115" transform="rotate(60)"/><ellipse rx="290" ry="115" transform="rotate(90)"/><ellipse rx="290" ry="115" transform="rotate(120)"/><ellipse rx="290" ry="115" transform="rotate(150)"/></g><path class="orbit-axis" d="M70 200H930M500 25V375"/><circle cx="500" cy="200" r="5" fill="currentColor"/></svg>
+        <figcaption class="figure-bottom mono"><span>Small inputs. Unexpected outcomes.</span><label class="orbit-control" for="orbit-shape">Adjust orbit <input id="orbit-shape" type="range" min="20" max="160" value="72" aria-label="Adjust orbital shape"></label></figcaption>
+      </figure>
+    </section>
+    <section id="projects" class="sandbox wrap section-space" aria-labelledby="sandbox-title">
+      <div class="section-heading"><p class="eyebrow mono">01 / THE SANDBOX</p><h2 id="sandbox-title">Made of curiosity.<br><span class="muted">Built by trying.</span></h2><p>Some things work. Some are still taking shape.<br>All of them teach me something.</p></div>
+      <a class="featured-project" href="space-game.html"><div class="game-art" aria-hidden="true"><span class="mono game-art-label">N° 001 / PLAYABLE EXPERIMENT</span><svg viewBox="0 0 600 360" fill="none"><g stroke="#55564e" stroke-width="1"><ellipse cx="300" cy="400" rx="280" ry="290"/><ellipse cx="300" cy="400" rx="210" ry="220"/><ellipse cx="300" cy="400" rx="140" ry="150"/><path d="M300 0V360M0 270H600M0 180H600M0 90H600"/></g><g fill="#eae8dd"><circle cx="90" cy="70" r="2"/><circle cx="440" cy="45" r="2"/><circle cx="525" cy="235" r="2"/><circle cx="150" cy="210" r="2"/><path d="M300 105L354 250L300 224L246 250Z"/></g><path d="M300 105V224L354 250Z" fill="#aaa99d"/><path d="M287 242L300 290L313 242" fill="#ff5a27"/><path d="M300 53V78M300 305V330" stroke="#ff5a27" stroke-width="3"/></svg><span class="game-art-bottom mono">INSERT CURIOSITY <span>PRESS PLAY ↗</span></span></div><div class="featured-copy"><div class="project-meta mono"><span>01 / GAME DEVELOPMENT</span><span class="status">BETA</span></div><h3>One more<br><span class="serif">orbit.</span></h3><p>A little browser game with a big “just one more round” problem. Dodge, shoot, and find out how far curiosity can take you.</p><span class="project-tools mono">JAVASCRIPT / CANVAS / BUILT WITH AI</span><span class="text-link">Play Space Game <span>↗</span></span></div></a>
+      <div class="experiment-list">
+        <details class="experiment"><summary><span class="experiment-number mono">02</span><span class="experiment-name">Thinking with machines<span>AI tools, creative workflows & learning</span></span><span class="experiment-status mono">EXPLORING</span><span class="expand" aria-hidden="true">+</span></summary><div class="experiment-body"><p>Discovering how AI can support creativity, coding, and learning. I use it to explore design ideas, work through unfamiliar code, and turn a question into something I can actually try.</p><p>The interesting part is the exchange: bringing my own ideas, questioning the output, and learning as I build. This site and the Space Game are two results of that process.</p></div></details>
+        <details class="experiment"><summary><span class="experiment-number mono">03</span><span class="experiment-name">Learning in the open<span>GitHub, version control & community</span></span><span class="experiment-status mono">ONGOING</span><span class="expand" aria-hidden="true">+</span></summary><div class="experiment-body"><p>My way into the developer world: learning how to track changes, share experiments, and understand what happens between a first idea and a working website.</p><a class="text-link" href="https://github.com/nereonski">Follow along on GitHub ↗</a></div></details>
+        <details class="experiment"><summary><span class="experiment-number mono">04</span><span class="experiment-name">This corner of the internet<span>Personal website & perpetual work in progress</span></span><span class="experiment-status mono">YOU’RE HERE</span><span class="expand" aria-hidden="true">+</span></summary><div class="experiment-body"><p>My first major web project, and a place to keep experimenting with typography, interaction, and the fundamentals. Made with plain HTML, CSS, JavaScript, patience, and a little help from AI.</p><a class="text-link" href="https://github.com/nereonski/nereo">Explore the source ↗</a></div></details>
       </div>
     </section>
-
-    <!-- Projects Section -->
-    <section id="projects" class="section">
-      <div class="container">
-        <h2 class="section-title">Sandbox</h2>
-        <div class="projects-grid">
-          <div class="project-card">
-            <div class="project-header">
-              <h3 class="project-title">AI</h3>
-              <span class="project-status">In Progress</span>
-            </div>
-            <p class="project-description">
-              Discovering how AI can support creativity, coding, and learning. From generating design ideas to writing cleaner code, experimenting with AI has been one of the most fascinating parts of my journey. It's not about shortcuts - it's about understanding how humans and machines can think together.
-            </p>
-            <div class="project-tech">
-              <span class="tech-tag">AI Tools</span>
-              <span class="tech-tag">Learning by Doing</span>
-              <span class="tech-tag">Creative Experiments</span>
-            </div>
-            <div class="project-links">
-              <a href="#" class="project-link">Explore Experiment</a>
-            </div>
-          </div>
-
-          <div class="project-card">
-            <div class="project-header">
-              <h3 class="project-title">Space Game</h3>
-              <span class="project-status">Beta Version</span>
-            </div>
-            <p class="project-description">
-              Had a lot of fun creating this little browser game in Cursor. The agent was pretty helpful and easy to use. Early problems with mobile devices have been fixed lately, and I'm excited to watch friends enjoy it.
-            </p>
-            <div class="project-tech">
-              <span class="tech-tag">JavaScript</span>
-              <span class="tech-tag">Canvas API</span>
-              <span class="tech-tag">Game Development</span>
-            </div>
-            <div class="project-links">
-              <a href="space-game.html" class="project-link">Play Game</a>
-            </div>
-          </div>
-
-          <div class="project-card">
-            <div class="project-header">
-              <h3 class="project-title">GitHub & The Developer World</h3>
-              <span class="project-status">Current Discovery</span>
-            </div>
-            <p class="project-description">
-              While diving into coding and web development, I stumbled upon GitHub - and quickly realized how much it shapes the developer world. So of course, I had to check it out.
-            </p>
-            <div class="project-tech">
-              <span class="tech-tag">GitHub</span>
-              <span class="tech-tag">Version Control</span>
-              <span class="tech-tag">Community Learning</span>
-            </div>
-            <div class="project-links">
-              <a href="#" class="project-link">Explore Experiment</a>
-            </div>
-          </div>
-
-          <div class="project-card">
-            <div class="project-header">
-              <h3 class="project-title">Portfolio Website (This One!)</h3>
-              <span class="project-status">Ongoing Experiment</span>
-            </div>
-            <p class="project-description">
-              This very website! My first major project built with vanilla HTML, CSS, and JavaScript. A hands-on learning space with a design inspired by developer aesthetics and curiosity. It's where I experiment, learn, and keep track of my progress - one line of code at a time.
-            </p>
-            <div class="project-tech">
-              <span class="tech-tag">HTML5</span>
-              <span class="tech-tag">CSS3</span>
-              <span class="tech-tag">JavaScript</span>
-              <span class="tech-tag">Animations</span>
-            </div>
-            <div class="project-links">
-              <a href="#" class="project-link">View Source</a>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="section">
-      <div class="container">
-        <h2 class="section-title">Let's Connect</h2>
-        <div class="contact-content">
-          <div class="contact-info">
-            <p class="contact-description">
-              I'm always excited to connect with fellow tech enthusiasts, coding beginners, and experienced professionals - anyone who shares a passion for learning and experimentation. Whether you want to share tips, discuss ideas, or just say hello - I'd love to hear from you.
-            </p>
-            <p class="contact-description">
-              And if you happen to spot a broken link, a typo, or think something could be improved (or even if you just find the site ugly), please reach out anyway - feedback is always welcome. Every suggestion helps me learn and make this little corner of the web a bit better.
-            </p>
-            <div class="contact-methods">
-              <a href="mailto:hi@nereo.me" class="contact-method">
-                <span class="contact-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
-                  </svg>
-                </span>
-                <span>Say Hi</span>
-              </a>
-              <a href="https://www.linkedin.com/in/nereo-kosinski/" class="contact-method">
-                <span class="contact-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                    <rect x="2" y="9" width="4" height="12"></rect>
-                    <circle cx="4" cy="4" r="2"></circle>
-                  </svg>
-                </span>
-                <span>LinkedIn Profile</span>
-              </a>
-              <a href="https://github.com/nereonski" class="contact-method">
-                <span class="contact-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                  </svg>
-                </span>
-                <span>GitHub Profile</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <section id="about" class="about section-space" aria-labelledby="about-title"><div class="wrap about-grid"><p class="eyebrow mono">02 / THE PERSON BEHIND THE PIXELS</p><div><h2 id="about-title">Logistics by day.<br><span class="serif">Possibilities</span> after hours.</h2><div class="about-prose"><p>Based in Frankfurt am Main, I work in international air cargo logistics. My day is about making connections and keeping things moving.</p><p>After hours, that curiosity takes a different route: web development, digital systems, and AI workflows. This is where I learn by making things, share the experiments, and see what happens next.</p></div><dl class="about-facts"><div><dt class="mono">CURRENT FREQUENCIES</dt><dd>Web development · UI / UX · AI · SEO basics</dd></div><div><dt class="mono">WORDS I WORK WITH</dt><dd>Deutsch · English · Español · Português</dd></div><div><dt class="mono">AWAY FROM THE SCREEN</dt><dd>History, music, gaming, good conversations.<br>And a very soft spot for tacos.</dd></div></dl></div></div></section>
+    <section id="contact" class="contact wrap section-space" aria-labelledby="contact-title"><p class="eyebrow mono">03 / OPEN CHANNEL</p><div class="contact-heading"><h2 id="contact-title">Good things start<br>with <span class="serif">a hello.</span></h2><a class="contact-arrow" href="mailto:hi@nereo.me" aria-label="Email Nereo">↗</a></div><div class="contact-bottom"><p>A thought, a question, a strange idea?<br>Or something here that could be better?<br>I’d love to hear it.</p><a class="email-link" href="mailto:hi@nereo.me">hi@nereo.me</a><div class="social-links"><a href="https://github.com/nereonski">GitHub ↗</a><a href="https://www.linkedin.com/in/nereo-kosinski/">LinkedIn ↗</a></div></div></section>
   </main>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 Nereo. Built with patience, curiosity, and a little help from AI.</p>
-      <div class="footer-signature">
-        <a href="#" class="skull-link" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
-          <img src="assets/images/Skulli.png" alt="Skull signature" class="skull-icon" />
-        </a>
-        <a href="impressum.html" class="footer-link impressum-link">Impressum</a>
-      </div>
-    </div>
-  </footer>
-
-  <script src="script.js"></script>
+  <footer class="site-footer wrap"><span class="mono">© 2026 Nereo · Always a work in progress.</span><a href="#top" class="footer-skull" aria-label="Back to top"><img src="assets/images/Skulli.png" width="30" height="30" alt=""></a><a href="impressum.html">Impressum ↗</a></footer>
 </body>
 </html>

@@ -1168,6 +1168,8 @@ class SpaceGame {
     }
     
     this.score = 0;
+    this.bestScore = 0;
+    try { this.bestScore = Number(localStorage.getItem('space-game-best')) || 0; } catch {}
     this.keys = {};
     this.lastShot = false;
     this.oneUpTimer = 0;
@@ -1183,6 +1185,19 @@ class SpaceGame {
       height: 50
     };
     
+    document.getElementById('start-game')?.addEventListener('click', () => this.state === 'menu' ? this.start() : this.restart());
+    document.getElementById('pause-game')?.addEventListener('click', () => {
+      if (this.state === 'playing') this.state = 'paused';
+      else if (this.state === 'paused') this.state = 'playing';
+    });
+    const releaseControls = () => {
+      this.keys = {};
+      this.isTouching = false;
+      this.touchX = this.touchY = 0;
+      if (this.state === 'playing') this.state = 'paused';
+    };
+    window.addEventListener('blur', releaseControls);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) releaseControls(); });
     this.setupEventListeners();
     this.setupFullscreen();
     this.setupExitButton();
@@ -1449,7 +1464,7 @@ class SpaceGame {
 
       // Prevent double-tap zoom on mobile
       let lastTouchEnd = 0;
-      document.addEventListener('touchend', (e) => {
+      this.canvas.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTouchEnd <= 300) {
           e.preventDefault();
@@ -1669,6 +1684,8 @@ class SpaceGame {
 
     // Keyboard shortcut (F key for fullscreen)
     document.addEventListener('keydown', (e) => {
+      if (document.activeElement !== this.canvas) return;
+      if (e.repeat && ['p', 'P', 'r', 'R', 'f', 'F'].includes(e.key)) return;
       if ((e.key === 'f' || e.key === 'F') && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
         e.preventDefault();
         toggleFullscreen();
@@ -1697,7 +1714,7 @@ class SpaceGame {
       this.canvas.height = window.innerHeight;
     } else {
       // Normal mode: maintain aspect ratio with max width
-      const maxWidth = Math.min(800, window.innerWidth - 40);
+      const maxWidth = Math.max(240, Math.min(800, container.clientWidth));
       this.canvas.width = maxWidth;
       this.canvas.height = 600;
     }
@@ -1723,11 +1740,13 @@ class SpaceGame {
 
   setupEventListeners() {
     document.addEventListener('keydown', (e) => {
+      if (document.activeElement !== this.canvas) return;
+      if (e.repeat && ['p', 'P', 'r', 'R', 'f', 'F'].includes(e.key)) return;
       
       // Prevent default behavior for game controls to avoid page scrolling
       // Only prevent when game is active (playing, paused, or menu states)
       const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
-      if (gameKeys.includes(e.key) && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
+      if (document.activeElement === this.canvas && gameKeys.includes(e.key) && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
         e.preventDefault();
       }
       
@@ -1756,9 +1775,9 @@ class SpaceGame {
     });
 
     document.addEventListener('keyup', (e) => {
-      // Prevent default behavior for game controls
+      // Release keys even if focus has moved outside the canvas.
       const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
-      if (gameKeys.includes(e.key) && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
+      if (document.activeElement === this.canvas && gameKeys.includes(e.key) && (this.state === 'playing' || this.state === 'paused' || this.state === 'menu')) {
         e.preventDefault();
       }
       
@@ -1773,7 +1792,6 @@ class SpaceGame {
     this.updateMobileControlsVisibility();
     // Focus the canvas to ensure keyboard events are captured
     this.canvas.focus();
-    this.gameLoop();
   }
 
   restart() {
@@ -2148,7 +2166,7 @@ class SpaceGame {
   drawUI() {
     this.ctx.save();
     this.ctx.fillStyle = '#00ff64';
-    this.ctx.font = '16px JetBrains Mono';
+    this.ctx.font = '16px monospace';
     this.ctx.shadowBlur = 5;
     this.ctx.shadowColor = '#00ff64';
     
@@ -2167,14 +2185,14 @@ class SpaceGame {
   drawMenu() {
     this.ctx.save();
     this.ctx.fillStyle = '#00ff64';
-    this.ctx.font = 'bold 32px JetBrains Mono';
+    this.ctx.font = 'bold 28px monospace';
     this.ctx.textAlign = 'center';
     this.ctx.shadowBlur = 10;
     this.ctx.shadowColor = '#00ff64';
     
     this.ctx.fillText('SPACE GAME', this.canvas.width / 2, this.canvas.height / 2 - 80);
     
-    this.ctx.font = '18px Inter';
+    this.ctx.font = '16px Arial';
     this.ctx.fillText('Press SPACEBAR to Start', this.canvas.width / 2, this.canvas.height / 2 - 20);
     this.ctx.fillText('Arrow Keys / WASD: Move', this.canvas.width / 2, this.canvas.height / 2 + 10);
     this.ctx.fillText('SPACEBAR: Shoot', this.canvas.width / 2, this.canvas.height / 2 + 40);
@@ -2205,7 +2223,7 @@ class SpaceGame {
     
     // Draw button text
     this.ctx.fillStyle = '#ffffff';
-    this.ctx.font = 'bold 20px JetBrains Mono';
+    this.ctx.font = 'bold 18px monospace';
     this.ctx.shadowBlur = 5;
     this.ctx.shadowColor = '#ffffff';
     this.ctx.fillText('START GAME', buttonX, buttonY + 7);
@@ -2219,12 +2237,12 @@ class SpaceGame {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.fillStyle = '#00ff64';
-    this.ctx.font = 'bold 32px JetBrains Mono';
+    this.ctx.font = 'bold 28px monospace';
     this.ctx.textAlign = 'center';
     this.ctx.shadowBlur = 10;
     this.ctx.shadowColor = '#00ff64';
     this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
-    this.ctx.font = '18px Inter';
+    this.ctx.font = '16px Arial';
     this.ctx.fillText('Press P to Resume', this.canvas.width / 2, this.canvas.height / 2 + 40);
     
     this.ctx.restore();
@@ -2236,23 +2254,22 @@ class SpaceGame {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.fillStyle = '#00ff64';
-    this.ctx.font = 'bold 32px JetBrains Mono';
+    this.ctx.font = 'bold 28px monospace';
     this.ctx.textAlign = 'center';
     this.ctx.shadowBlur = 10;
     this.ctx.shadowColor = '#00ff64';
     this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 50);
     
-    this.ctx.font = '20px Inter';
+    this.ctx.font = '20px Arial';
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2);
     
-    const leaderboard = this.loadLeaderboardSync();
-    const isNewHighScore = leaderboard.length > 0 && leaderboard[0].score === this.score && leaderboard[0].nickname === this.playerNickname;
+    const isNewHighScore = this.score > 0 && this.score >= this.bestScore;
     
     if (isNewHighScore && this.score > 0) {
       this.ctx.fillText('NEW HIGH SCORE!', this.canvas.width / 2, this.canvas.height / 2 + 40);
     }
     
-    this.ctx.font = '18px Inter';
+    this.ctx.font = '16px Arial';
     this.ctx.fillText('Press R to Restart', this.canvas.width / 2, this.canvas.height / 2 + 80);
     
     this.ctx.restore();
@@ -2264,31 +2281,44 @@ class SpaceGame {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.fillStyle = '#00ff64';
-    this.ctx.font = 'bold 32px JetBrains Mono';
+    this.ctx.font = 'bold 28px monospace';
     this.ctx.textAlign = 'center';
     this.ctx.shadowBlur = 10;
     this.ctx.shadowColor = '#00ff64';
     this.ctx.fillText('VICTORY!', this.canvas.width / 2, this.canvas.height / 2 - 80);
     
-    this.ctx.font = '20px Inter';
+    this.ctx.font = '20px Arial';
     this.ctx.fillText('All 50 Stages Completed!', this.canvas.width / 2, this.canvas.height / 2 - 30);
     this.ctx.fillText(`Final Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
     
-    this.ctx.font = '18px Inter';
+    this.ctx.font = '16px Arial';
     this.ctx.fillText('Press R to Restart', this.canvas.width / 2, this.canvas.height / 2 + 60);
     
     this.ctx.restore();
   }
 
-  gameLoop() {
+  gameLoop(timestamp = 0) {
+    requestAnimationFrame(time => this.gameLoop(time));
+    if (document.hidden || timestamp - (this.lastFrame || 0) < 1000 / 60 - 1) return;
+    this.lastFrame = timestamp;
     this.update();
+    if (this.state !== this.lastReportedState) {
+      if (this.state === 'gameover' && this.score > this.bestScore) {
+        this.bestScore = this.score;
+        try { localStorage.setItem('space-game-best', String(this.bestScore)); } catch {}
+      }
+      const status = document.querySelector('.game-status');
+      const messages = { menu: 'Choose Start, or focus the playfield and press Space. Touch controls appear when playing.', playing: 'Playing. Move with arrows or WASD, shoot with Space. Touchscreens: joystick to move, button to shoot.', paused: 'Paused. Choose Pause / Resume, or press P in the playfield.', gameover: `Game over. Score: ${this.score}. Best: ${this.bestScore}. Choose Start / Restart to try again.` };
+      if (status) status.textContent = messages[this.state] || '';
+      this.lastReportedState = this.state;
+    }
     this.draw();
     
     if (this.state === 'menu' && (this.keys[' '] || this.keys['Spacebar'])) {
       this.start();
     }
     
-    requestAnimationFrame(() => this.gameLoop());
+
   }
 }
 
